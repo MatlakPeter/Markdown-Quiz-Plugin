@@ -1,12 +1,8 @@
 import re
-# 1. Import the correct BasePlugin from MkDocs
 from mkdocs.plugins import BasePlugin
 
 class QuizPlugin(BasePlugin):
-    """
-    An MkDocs plugin to find a tag and replace it with HTML.
-    """
-    
+  
     
     FIND_ME = re.compile(r'::mycomponent::')
 
@@ -19,10 +15,7 @@ class QuizPlugin(BasePlugin):
     """
 
     def on_page_content(self, html, **kwargs):
-        """
-        The main MkDocs hook that does the work.
-        'markdown' is the full text of a page.
-        """
-        
+      
+
        
         return self.FIND_ME.sub(self.REPLACE_WITH_HTML, html)
