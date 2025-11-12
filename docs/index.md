@@ -1,9 +1,9 @@
 # Welcome to MkDocs
-dljapklsdjaskl;
 
-::mycomponent::
 
-# i like pizza 
+::question::#How many many oceans are on earth?
+jdsankjfnajkf::question::djwadjkabj
+
 ## Commands
 * `mkdocs new [dir-name]` - Create a new project.
 * `mkdocs serve` - Start the live-reloading docs server.
