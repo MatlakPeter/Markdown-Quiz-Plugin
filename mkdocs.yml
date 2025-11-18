@@ -1,0 +1,5 @@
+site_name: Peter's
+plugins:
+  - search
+  - quiz
+  
