@@ -1,3 +1,7 @@
-site_name: jhasdjkbnajksd
+site_name: nice
 plugins:
         - quiz
+extra_css:
+  - quiz.css
+extra_javascript:
+  - quiz.js
