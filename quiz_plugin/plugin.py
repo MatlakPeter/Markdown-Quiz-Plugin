@@ -2,12 +2,14 @@ import re
 from mkdocs.plugins import BasePlugin
 
 class QuizPlugin(BasePlugin):
-    FIND_ME = re.compile(r'::mycomponent::')
-    REPLACE_WITH_HTML = """
+    # two different types of quizzes
+    SINGLE_CHOICE = re.compile(r'::singlechoice::') 
+    TRUE_FALSE = re.compile(r'::truefalse::')
+    SINGLE_CHOICE_HTML = """
 <div class="quiz-component">
     <div class="quiz-box">
-        <h3>My Simple HTML Component</h3>
-        <p>This was rendered by my first plugin!</p>
+        <h3>Single Choice Question</h3>
+        <p>This is a single choice question.</p>
         <div class="quiz-answers">
             <button class="quiz-answer" data-correct="false">Wrong Answer 1</button>
             <button class="quiz-answer" data-correct="true">Correct Answer</button>
@@ -17,9 +19,25 @@ class QuizPlugin(BasePlugin):
     </div>
 </div>
 """
+    TRUE_FALSE_HTML = """
+<div class="quiz-component">
+    <div class="quiz-box">
+        <h3>True or False Question</h3>
+        <p>This statement is FALSE.</p>
+        <div class="quiz-answers">
+            <button class="quiz-answer" data-correct="false">True</button>
+            <button class="quiz-answer" data-correct="true">False</button>
+        </div>
+    </div>
+</div>
+"""
     
     def on_page_content(self, html, **kwargs):
-        return self.FIND_ME.sub(self.REPLACE_WITH_HTML, html)
+        # Replace multiple choice quizzes
+        html = self.SINGLE_CHOICE.sub(self.SINGLE_CHOICE_HTML, html)
+        # Replace true/false quizzes
+        html = self.TRUE_FALSE.sub(self.TRUE_FALSE_HTML, html)
+        return html
     
     def on_post_page(self, output, **kwargs):
         # Inject the JavaScript file reference before the closing body tag

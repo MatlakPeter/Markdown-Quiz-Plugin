@@ -1,12 +1,17 @@
 # Welcome to MkDocs
+## Button press version 2
 
-This is a test of the quiz buttons!
+---
 
-::mycomponent::
+In this version (v2), I am using two different types of quiz questions, in contrast to v1.
 
-::mycomponent::
+To do so, I have updated the *plugin.py* file to support 2 types of structures (::structure::).
 
-::mycomponent::
+---
+
+::singlechoice::
+
+::truefalse::
 
 
 
