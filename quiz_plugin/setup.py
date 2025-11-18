@@ -17,10 +17,10 @@ setup(
     # It tells MkDocs that your plugin exists.
     entry_points={
         'mkdocs.plugins': [
-            'quiz = quiz.plugin:QuizPlugin', 
-            # ^^^^   ^^^^^^^^^^^^^^^^^^^^
-            # |      |
-            # |      Where MkDocs finds the plugin class
+            'quiz = quiz_plugin.plugin:QuizPlugin', 
+            # ^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            # |     |
+            # |     Where MkDocs finds the plugin class
             # Plugin name used in mkdocs.yml
         ]
     }

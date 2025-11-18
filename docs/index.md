@@ -17,7 +17,7 @@ Welcome to Peter's initial commit page.
     docs/
         index.md  # The documentation homepage.
         ...       # Other markdown pages, images and other files.
-    quiz/
+    quiz_plugin/
         __init__.py
         ...
 
