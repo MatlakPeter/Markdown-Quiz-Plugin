@@ -5,3 +5,7 @@ mkdocs_quiz_plugin.egg-info/dependency_links.txt
 mkdocs_quiz_plugin.egg-info/entry_points.txt
 mkdocs_quiz_plugin.egg-info/requires.txt
 mkdocs_quiz_plugin.egg-info/top_level.txt
+quiz_plugin/__init__.py
+quiz_plugin/plugin.py
+quiz_plugin/assets/quiz.css
+quiz_plugin/assets/quiz.js
