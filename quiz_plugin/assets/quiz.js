@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll('.quiz-container').forEach((container) => {
         const questions = container.querySelectorAll(".quiz-question-block");
+        const answerBlock = container.querySelectorAll(".quiz-answer-container");
         const nextBtn = container.querySelector(".quiz-nav-next");
         const prevBtn = container.querySelector(".quiz-nav-previous");
         const statusText = container.querySelector(".quiz-status-text");
@@ -11,6 +12,9 @@ document.addEventListener("DOMContentLoaded", () => {
         
         let currentIndex = 0;
         let previousIndex = 0;
+        
+        answerBlock.forEach(block => randomizeAnswers(block));
+
         for (let i = 1; i < questions.length; i++) {
             questions[i].style.display = "none";
         }
@@ -74,6 +78,32 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            // Pick a remaining element
+            const j = Math.floor(Math.random() * (i + 1));
+            // Swap it with the current element
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+    
+    // Function to randomize answers for a single question block
+function randomizeAnswers(block) {
+        // Find all answer buttons within the current question block
+    const answerButtons = Array.from(block.querySelectorAll('.quiz-answer'));
+        
+        // Only shuffle if there's more than one answer
+    if (answerButtons.length <= 1) return;
+
+        // Shuffle the array of button elements
+    shuffleArray(answerButtons);
+        
+        // Re-append the shuffled buttons to the parent container (the block itself).
+        // Appending an existing element moves it, achieving the reordering.
+    answerButtons.forEach(button => {
+        block.appendChild(button);
+    });
+}
 
 function generateReport(container){
     const questions = container.querySelectorAll('.quiz-question-block');
