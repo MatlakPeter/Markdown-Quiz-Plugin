@@ -1,13 +1,13 @@
-# title
-
-::question::How many many oceans are on earth? 
-
-[ ] 2
+```quiz 
+### Q
+What is 2 + 2?
+[] 3
 [x] 4
-[ ] 5
-[ ] 7
+[] 5
 
-::question::Do you like cake? 
-
-[x] yes
-[ ] no
+### Q
+What is the capital of France?
+[x] Paris
+[] London
+[] Berlin
+```
