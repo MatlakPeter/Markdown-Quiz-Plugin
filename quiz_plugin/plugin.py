@@ -43,8 +43,11 @@ class QuizPlugin(BasePlugin):
             log.warning("[QuizPlugin] 'assets' directory not found. CSS/JS might be missing.")
 
     INCLUDE_REGEX = re.compile(r'^\s*include\((.+?)\)', flags=re.MULTILINE)
-    QUIZ_BLOCK_REGEX = re.compile(r'```quiz\s+(.*?)```', flags=re.DOTALL)
-    QUESTION_SPLIT_REGEX = re.compile(r'(^|\n)###\s+Q')
+    
+    QUIZ_BLOCK_REGEX = re.compile(r'@start(.*?)@end', flags=re.DOTALL)
+    
+    QUESTION_SPLIT_REGEX = re.compile(r'(?:^|\n)\s*---\s*(?:\n|$)')
+    
     ANSWER_REGEX = re.compile(r'^\s*\[(x|\s)?\]\s*(.*)', flags=re.MULTILINE)
 
 
@@ -83,7 +86,8 @@ class QuizPlugin(BasePlugin):
             block_content = match.group(1)
             
             raw_questions = self.QUESTION_SPLIT_REGEX.split(block_content)
-            questions = [q for q in raw_questions if q.strip() and "###" not in q]
+            
+            questions = [q for q in raw_questions if q.strip()]
             
             html_output = ['<div class="quiz-container" markdown="1">']
             
@@ -99,10 +103,10 @@ class QuizPlugin(BasePlugin):
 
             html_output.append(f'''
             <div class="quiz-navigation">
-                <button class="quiz-nav-previous">&lt;Previous</button>  
+                <button class="quiz-nav-previous" style="display: none;">Previous</button>  
                 <span class="quiz-status-text"></span>
-                <button class="quiz-nav-next">Next&gt;</button>
-                <button class="quiz-nav-submit">Submit</button>
+                <button class="quiz-nav-next">Next</button>
+                <button class="quiz-nav-submit" style="display: none;">Submit</button>
             </div>
             ''')
             html_output.append('<div class="quiz-results"></div>')
