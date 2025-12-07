@@ -85,6 +85,19 @@ html, body {
     border: 2px solid #b02a37;
 }
 
+/* dropdown */
+.quiz-dropdown {
+    font-size: 16px; 
+    font-family: inherit;
+    padding: 4px 8px; 
+    vertical-align: middle; 
+    cursor: pointer;
+}
+
+.quiz-dropdown option {
+    font-size: 16px;
+}
+
 /* navigation buttons: Next, Previous, Submit */
 .quiz-nav-next,
 .quiz-nav-previous,

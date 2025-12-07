@@ -9,10 +9,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const resultsDiv = container.querySelector(".quiz-results");
         const submitBtn = container.querySelector('.quiz-nav-submit');
         const progessBar = container.querySelector(".quiz-progress-bar");
-        
+
         let currentIndex = 0;
         let previousIndex = 0;
-        
+
         answerBlock.forEach(block => randomizeAnswers(block));
 
         for (let i = 1; i < questions.length; i++) {
@@ -20,21 +20,60 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         updateQuizDisplay();
 
-        buttons.forEach(button => {
-            button.addEventListener("click", function () {
-                if (this.classList.contains("selected")) {
-                    this.classList.remove("selected");
-                    this.style.backgroundColor = "";
-                    this.style.color = "";
-                    return;
-                }
+        //add eventlistener to every button
+        // Initialize all questions (buttons AND dropdowns)
+        questions.forEach(questionBlock => {
+            const answerButtons = questionBlock.querySelectorAll(".quiz-answer");
+            const dropdown = questionBlock.querySelector(".quiz-dropdown");
+            
+            // Check if this is a dropdown question
+            if (dropdown) {
+                setupDropdownQuestion(questionBlock, dropdown);
+            } else if (answerButtons.length > 0) {
+                const questionType = questionBlock.getAttribute("data-type") || "multiple";
                 
-                this.classList.add("selected");
-                const isCorrect = this.dataset.correct === "true";
-                this.style.backgroundColor = 'blue'
-                this.style.color = "white";
-            });
+                answerButtons.forEach(button => {
+                    button.addEventListener("click", function () {
+                        handleAnswerClick(this, questionType, answerButtons);
+                    });
+                });
+            }
         });
+
+        function handleAnswerClick(clickedButton, questionType, allButtons) {
+            if (questionType === "single") {
+               //for deselection: store if the button was already clicked
+                const wasSelected = clickedButton.classList.contains("selected");
+
+                //deselect all buttons
+                allButtons.forEach(btn => {
+                    btn.classList.remove("selected");
+                    btn.style.backgroundColor = "";
+                    btn.style.color = "";
+                });
+
+                //if the button wasn't selected before -> select it
+                if (!wasSelected) {
+                    clickedButton.classList.add("selected");
+                    clickedButton.style.backgroundColor = 'blue';
+                    clickedButton.style.color = "white";
+                }
+                //if it was selected before, it already got cleared at deselection
+            } else {
+                //for multiple choice
+                if (clickedButton.classList.contains("selected")) {
+                    //if already selected -> deselect it
+                    clickedButton.classList.remove("selected");
+                    clickedButton.style.backgroundColor = "";
+                    clickedButton.style.color = "";
+                } else {
+                    //if not selected -> select it
+                    clickedButton.classList.add("selected");
+                    clickedButton.style.backgroundColor = 'blue';
+                    clickedButton.style.color = "white";
+                }
+            }
+        }
 
         if (submitBtn) {
             submitBtn.addEventListener('click', () => {
@@ -55,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (currentIndex < questions.length - 1) {
                 currentIndex++;
                 updateQuizDisplay();
-             }
+            }
         });
         prevBtn.addEventListener("click", () => {
             if (currentIndex > 0) {
@@ -76,79 +115,149 @@ document.addEventListener("DOMContentLoaded", () => {
             nextBtn.style.display = currentIndex === questions.length - 1 ? "none" : "inline-block";
             submitBtn.style.display = currentIndex === questions.length - 1 ? "inline-block" : "none";
         }
+
+
     });
 });
+
 function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            // Pick a remaining element
-            const j = Math.floor(Math.random() * (i + 1));
-            // Swap it with the current element
-            [array[i], array[j]] = [array[j], array[i]];
-        }
+    for (let i = array.length - 1; i > 0; i--) {
+        // Pick a remaining element
+        const j = Math.floor(Math.random() * (i + 1));
+        // Swap it with the current element
+        [array[i], array[j]] = [array[j], array[i]];
     }
-    
-    // Function to randomize answers for a single question block
+}
+
 function randomizeAnswers(block) {
-        // Find all answer buttons within the current question block
+    // Find all answer buttons within the current question block
     const answerButtons = Array.from(block.querySelectorAll('.quiz-answer'));
-        
-        // Only shuffle if there's more than one answer
+
+    // Only shuffle if there's more than one answer
     if (answerButtons.length <= 1) return;
 
-        // Shuffle the array of button elements
+    // Shuffle the array of button elements
     shuffleArray(answerButtons);
-        
-        // Re-append the shuffled buttons to the parent container (the block itself).
-        // Appending an existing element moves it, achieving the reordering.
+
+    // Re-append the shuffled buttons to the parent container (the block itself).
+    // Appending an existing element moves it, achieving the reordering.
     answerButtons.forEach(button => {
         block.appendChild(button);
     });
 }
 
-function generateReport(container){
+function setupDropdownQuestion(questionBlock, dropdown) {
+    //shuffle options
+    const options = Array.from(dropdown.querySelectorAll('option:not([disabled])'));
+    shuffleArray(options);
+    
+    const placeholder = dropdown.querySelector('option[disabled]');
+    
+    dropdown.innerHTML = '';
+    if (placeholder) {
+        dropdown.appendChild(placeholder);
+    }
+    options.forEach(option => {
+        dropdown.appendChild(option);
+    });
+    
+    dropdown.selectedIndex = 0;
+}
+
+
+function generateReport(container) {
     const questions = container.querySelectorAll('.quiz-question-block');
     let totalScore = 0;
     let questionsHTML = "";
 
     questions.forEach((q, index) => {
-        const questionText = q.querySelector('.quiz-question').innerHTML;
-        const allAnswers = Array.from(q.querySelectorAll('.quiz-answer'));
+        const questionElement = q.querySelector('.quiz-question');
+        const dropdown = q.querySelector('.quiz-dropdown');
+        
+        let isCorrect = false;
+        let userAnswerDisplay = "None";
+        let correctAnswerDisplay = "";
+        let displayQuestion = "";
+        
+        
+        if (dropdown) {
+            const selectedOption = dropdown.options[dropdown.selectedIndex];
+            
+            const options = dropdown.querySelectorAll('option');
+            options.forEach(option => {
+                if (option.dataset.correct === "true") {
+                    correctAnswerDisplay = option.textContent;
+                }
+            });
+            
+            const questionClone = questionElement.cloneNode(true);
+            const dropdownClone = questionClone.querySelector('.quiz-dropdown');
+            
+            if (selectedOption && !selectedOption.disabled) {
+                userAnswerDisplay = selectedOption.textContent;
+                isCorrect = selectedOption.dataset.correct === "true";
+            }
+            
+           
+            if (dropdownClone) {
+                const placeholderSpan = document.createElement('span');
+                placeholderSpan.textContent = '...';  
+                placeholderSpan.style.margin = '0 3px';
+                dropdownClone.parentNode.replaceChild(placeholderSpan, dropdownClone);
+            }
+            
+            displayQuestion = questionClone.innerHTML;
+            
+        } else {
+            const allAnswers = Array.from(q.querySelectorAll('.quiz-answer'));
+            const userSelected = allAnswers.filter(btn => btn.classList.contains('selected'));
+            const correctAnswers = allAnswers.filter(btn => btn.dataset.correct === 'true');
 
-        const userSelected = allAnswers.filter(btn => btn.classList.contains('selected'));
-        const correctAnswers = allAnswers.filter(btn => btn.dataset.correct === 'true');
-        let isCorrect = true;
+            const buttonQuestionType = q.getAttribute("data-type") || "multiple";
 
-        if(userSelected.length !== correctAnswers.length) {
-            isCorrect = false;
+            const formatList = (btns) => btns.map(b => b.innerText).join(', ') || '<em>None</em>';
+            userAnswerDisplay = formatList(userSelected);
+            correctAnswerDisplay = formatList(correctAnswers);
+
+            if (buttonQuestionType === "single") {
+                if (userSelected.length === 1) {
+                    isCorrect = userSelected[0].dataset.correct === "true";
+                }
+            } else {
+                isCorrect = true;
+                if (userSelected.length !== correctAnswers.length) isCorrect = false;
+                userSelected.forEach(btn => {
+                    if (btn.dataset.correct === "false") isCorrect = false;
+                });
+            }
+            
+          
+            displayQuestion = questionElement.innerHTML;
         }
 
-        userSelected.forEach(btn => {
-            if(btn.dataset.correct === "false") {
-                isCorrect = false;
-            }
-        });
-
-        if(isCorrect) {
+        // Score calculation
+        if (isCorrect) {
             totalScore++;
         }
 
-        const formatList = (btns) => btns.map(b => b.innerText).join(', ') || '<em>None</em>';
         const statusIcon = isCorrect ? '✅' : '❌';
+        const questionTypeLabel = dropdown ? "dropdown" : (q.getAttribute("data-type") || "multiple");
+       
 
         questionsHTML += `
             <div style="margin-bottom: 15px; padding: 15px; border: 1px solid #ccc; border-left: 5px solid ${isCorrect ? 'green' : 'red'}; background: #fff; border-radius: 5px;">
                 <p style="margin: 0 0 10px 0; font-weight: bold;">
-                    ${index + 1}. ${questionText} ${statusIcon}
+                    ${index + 1}. ${displayQuestion} ${statusIcon}
                 </p>
                 
                 <div style="font-size: 0.95em; color: #555;">
                     <div style="margin-bottom: 4px;">
                         <strong>Your Answer:</strong> 
-                        <span style="${isCorrect ? 'color: green' : 'color: red'}">${formatList(userSelected)}</span>
+                        <span style="${isCorrect ? 'color: green' : 'color: red'}">${userAnswerDisplay}</span>
                     </div>
                     <div>
                         <strong>Correct Answer:</strong> 
-                        <span style="color: green">${formatList(correctAnswers)}</span>
+                        <span style="color: green">${correctAnswerDisplay}</span>
                     </div>
                 </div>
             </div>
@@ -167,4 +276,3 @@ function generateReport(container){
         </div>
     `;
 }
-
