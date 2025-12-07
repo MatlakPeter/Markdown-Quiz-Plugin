@@ -21,6 +21,9 @@ class QuizPlugin(BasePlugin):
         config['extra_css'].append('assets/quiz.css')
         config['extra_javascript'].append('assets/quiz.js')
 
+        # Add SortableJS for the ordering questions
+        config['extra_javascript'].append('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js')
+
         return config
 
     def on_post_build(self, config):
@@ -29,7 +32,6 @@ class QuizPlugin(BasePlugin):
 
         current_dir = os.path.dirname(__file__)
         assets_source_dir = os.path.join(current_dir, 'assets')
-
         assets_dest_dir = os.path.join(config['site_dir'], 'assets')
 
         os.makedirs(assets_dest_dir, exist_ok=True)
@@ -43,12 +45,13 @@ class QuizPlugin(BasePlugin):
         else:
             log.warning("[QuizPlugin] 'assets' directory not found. CSS/JS might be missing.")
 
+    # --- REGEX DEFINITIONS ---
     INCLUDE_REGEX = re.compile(r'^\s*include\((.+?)\)', flags=re.MULTILINE)
     QUIZ_BLOCK_REGEX = re.compile(r'@start(.*?)@end', flags=re.DOTALL)
     QUESTION_SPLIT_REGEX = re.compile(r'(?:^|\n)\s*---\s*(?:\n|$)')
     ANSWER_REGEX = re.compile(r'^\s*\[(x|\s)?\]\s*(.*)', flags=re.MULTILINE)
     DROPDOWN_REGEX = re.compile(r'\{\{(.+?)\}\}')
-
+    ORDER_ITEM_REGEX = re.compile(r'^\s*\((\d+)\.\)\s*(.*)$', flags=re.MULTILINE | re.UNICODE)
 
     def on_page_markdown(self, markdown, page, config, **kwargs):
         if not self.config['enabled']:
@@ -83,8 +86,14 @@ class QuizPlugin(BasePlugin):
         def replace_quiz_block(match):
             block_content = match.group(1)
             
-            raw_questions = self.QUESTION_SPLIT_REGEX.split(block_content)
+            # Robust split: check if separators exist, otherwise treat as single question
+            if '---' in block_content:
+                raw_questions = self.QUESTION_SPLIT_REGEX.split(block_content)
+            else:
+                raw_questions = [block_content]
+            
             questions = [q for q in raw_questions if q.strip()]
+            
             html_output = ['<div class="quiz-container" markdown="1">']
             
             html_output.append('''
@@ -116,12 +125,25 @@ class QuizPlugin(BasePlugin):
         lines = text.strip().split('\n')
         question_text_parts = []
         answers_html = []
+        order_items = []
         correct_answer_count = 0
         
+        # --- PARSING PHASE ---
         for line in lines:
             line = line.strip()
             if not line: continue
             
+            # 1. Check for Ordering Item: (1.) Item Text
+            normalized_line = line.replace('\xa0', ' ')
+            order_match = self.ORDER_ITEM_REGEX.match(normalized_line)
+            
+            if order_match:
+                item_number = int(order_match.group(1))
+                item_text = order_match.group(2).strip()
+                order_items.append((item_number, item_text))
+                continue
+
+            # 2. Check for Standard Answers: [x] Correct or [ ] Incorrect
             ans_match = self.ANSWER_REGEX.match(line)
             if ans_match:
                 is_correct_marker = ans_match.group(1) == 'x'
@@ -135,48 +157,83 @@ class QuizPlugin(BasePlugin):
                     f'<button class="quiz-answer" data-correct="{is_correct_str}">{ans_text}</button>'
                 )
             else:
+                # Regular text line (question body)
                 question_text_parts.append(line)
 
         full_question_text = " ".join(question_text_parts)
         
-        def replace_dropdown(match):
-            content = match.group(1)
-            raw_options = content.split('|')
-            
-            processed_options = []
-            for i, opt in enumerate(raw_options):
-                opt = opt.strip()
-                is_correct = "true" if i == 0 else "false"
+        # --- DROPDOWN PROCESSING ---
+        # Only process dropdowns if we aren't doing an ordering question
+        has_dropdown = False
+        if not order_items:
+            def replace_dropdown(match):
+                content = match.group(1)
+                raw_options = content.split('|')
                 
-                processed_options.append({
-                    "text": opt,
-                    "is_correct": is_correct
-                })
-            
-            random.shuffle(processed_options)
-            
-            select_html = ['<select class="quiz-dropdown">']
-            select_html.append('<option disabled>Choose...</option>')
-            
-            for item in processed_options:
-                select_html.append(
-                    f'<option data-correct="{item["is_correct"]}">{item["text"]}</option>'
-                )
-            
-            select_html.append('</select>')
-            return "".join(select_html)
+                processed_options = []
+                for i, opt in enumerate(raw_options):
+                    opt = opt.strip()
+                    is_correct = "true" if i == 0 else "false"
+                    processed_options.append({"text": opt, "is_correct": is_correct})
+                
+                # Inline shuffle for dropdown options
+                random.shuffle(processed_options)
+                
+                select_html = ['<select class="quiz-dropdown">']
+                select_html.append('<option disabled>Choose...</option>')
+                for item in processed_options:
+                    select_html.append(
+                        f'<option data-correct="{item["is_correct"]}">{item["text"]}</option>'
+                    )
+                select_html.append('</select>')
+                return "".join(select_html)
 
-        full_question_text = self.DROPDOWN_REGEX.sub(replace_dropdown, full_question_text)
+            # Check if dropdown exists before replacing to set flag
+            if self.DROPDOWN_REGEX.search(full_question_text):
+                has_dropdown = True
+                full_question_text = self.DROPDOWN_REGEX.sub(replace_dropdown, full_question_text)
 
-        data_type_attr = "" 
-        if len(answers_html) > 0:
-            if correct_answer_count == 1:
-                data_type_attr = ' data-type="single"'
-            else:
-                data_type_attr = ' data-type="multiple"'
+        # --- HTML GENERATION ---
         
         display_style = ' style="display: none;"' if index > 0 else ''
-        
+
+        # CASE A: Ordering Question
+        if order_items:
+            # Sort by correct index to ensure data integrity
+            order_items.sort(key=lambda x: x[0])
+            
+            # Create HTML items
+            list_items_html = []
+            for item_number, item_text in order_items:
+                list_items_html.append(
+                    f'<div class="quiz-order-item" data-correct-order="{item_number}" draggable="true">{item_text}</div>'
+                )
+            
+            # Shuffle for display
+            random.shuffle(list_items_html)
+            
+            return f'''
+            <div class="quiz-question-block" data-question-index="{index}" data-type="ordering"{display_style}>
+                <p class="quiz-question">{full_question_text}</p>
+                <div class="quiz-ordering-list">
+                    {"".join(list_items_html)}
+                </div>
+            </div>
+            '''
+
+        # CASE B: Dropdown Question
+        if has_dropdown:
+            return f'''
+            <div class="quiz-question-block" data-question-index="{index}" data-type="dropdown"{display_style}>
+                <p class="quiz-question">{full_question_text}</p>
+            </div>
+            '''
+
+        # CASE C: Standard Multiple/Single Choice
+        data_type_attr = ' data-type="multiple"'
+        if correct_answer_count == 1:
+            data_type_attr = ' data-type="single"'
+            
         answers_block = ""
         if answers_html:
             answers_block = f'<div class="quiz-answer-container">{"".join(answers_html)}</div>'

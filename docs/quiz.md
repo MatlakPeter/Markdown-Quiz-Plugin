@@ -15,9 +15,9 @@ Which of the following countries are officially located on the continent of Sout
 The octopus has {{3|1|4|8}} hearts
 ---
 Put the planets in order from the sun
-(1) Mercury
-(2) Venus
-(3) Earth
-(4) Mars
+(1.) Mercury
+(2.) Venus
+(3.) Earth
+(4.) Mars
 ---
 @end

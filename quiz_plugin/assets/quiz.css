@@ -98,6 +98,54 @@ html, body {
     font-size: 16px;
 }
 
+/* --- Ordering List Container --- */
+.quiz-ordering-list {
+    display: flex;
+    flex-direction: column;       /* vertical stack */
+    gap: 12px;                    /* spacing between items */
+    max-width: 600px;             /* same max width as answer buttons */
+    margin: 0 auto 20px auto;     /* center horizontally */
+    padding: 0;
+    list-style: none;
+}
+
+/* --- Ordering Item (Draggable) --- */
+.quiz-order-item {
+    padding: 8px 16px;            /* same as buttons */
+    background-color: white;
+    border: 1px solid #007acc;
+    border-radius: 8px;
+    cursor: grab;                 /* draggable hint */
+    user-select: none;
+    font-family: inherit;
+    font-size: 16px;
+    color: #007acc;
+    text-align: center;
+    box-sizing: border-box;
+    min-width: 120px;             /* match buttons */
+    max-width: 100%;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+/* Hover effect like buttons */
+.quiz-order-item:hover {
+    background-color: #007acc;
+    color: white;
+    border-color: #005a9e;
+}
+
+/* While dragging (ghost) */
+.ordering-ghost {
+    opacity: 0.5;
+    background-color: #d0e0ff;
+    border-color: #005a9e;
+}
+
+/* Change cursor when actively dragging */
+.sortable-chosen {
+    cursor: grabbing !important;
+}
+
 /* navigation buttons: Next, Previous, Submit */
 .quiz-nav-next,
 .quiz-nav-previous,
