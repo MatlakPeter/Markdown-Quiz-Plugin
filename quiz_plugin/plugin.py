@@ -2,7 +2,6 @@ import os
 import shutil
 import re
 import logging
-import random
 from mkdocs.plugins import BasePlugin
 from mkdocs.config import config_options
 
@@ -176,8 +175,7 @@ class QuizPlugin(BasePlugin):
                     is_correct = "true" if i == 0 else "false"
                     processed_options.append({"text": opt, "is_correct": is_correct})
                 
-                # Inline shuffle for dropdown options
-                random.shuffle(processed_options)
+                
                 
                 select_html = ['<select class="quiz-dropdown">']
                 select_html.append('<option disabled>Choose...</option>')
@@ -209,8 +207,6 @@ class QuizPlugin(BasePlugin):
                     f'<div class="quiz-order-item" data-correct-order="{item_number}" draggable="true">{item_text}</div>'
                 )
             
-            # Shuffle for display
-            random.shuffle(list_items_html)
             
             return f'''
             <div class="quiz-question-block" data-question-index="{index}" data-type="ordering"{display_style}>
