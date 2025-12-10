@@ -253,7 +253,7 @@ function reportQuestion(questionElement, index) {
         if (btn.dataset.correct === "false") isCorrect = false;
     });
 
-    const formatList = (btns) => btns.map(b => b.innerText).join(', ') || '<em>None</em>';
+    const formatList = (btns) => btns.map(b => b.innerHTML).join(', ') || '<em>None</em>';
     
     return createReportCard(index, questionText, isCorrect, formatList(userSelected), formatList(correctAnswers));
 }
@@ -301,11 +301,11 @@ function reportOrdering(questionElement, index) {
 
     const isCorrect = items.every((item, pos) => Number(item.dataset.correctOrder) === pos + 1);
 
-    const userOrder = items.map(i => i.innerText).join(", ");
+    const userOrder = items.map(i => i.innerHTML).join(", ");
     
     const correctOrder = items.slice()
         .sort((a, b) => Number(a.dataset.correctOrder) - Number(b.dataset.correctOrder))
-        .map(i => i.innerText)
+        .map(i => i.innerHTML)
         .join(", ");
 
     return createReportCard(index, questionText, isCorrect, userOrder, correctOrder);

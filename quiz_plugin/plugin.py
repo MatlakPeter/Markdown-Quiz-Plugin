@@ -51,7 +51,8 @@ class QuizPlugin(BasePlugin):
     ANSWER_REGEX = re.compile(r'^\s*\[(x|\s)?\]\s*(.*)', flags=re.MULTILINE)
     DROPDOWN_REGEX = re.compile(r'\{\{(.+?)\}\}')
     ORDER_ITEM_REGEX = re.compile(r'^\s*\((\d+)\.\)\s*(.*)$', flags=re.MULTILINE | re.UNICODE)
-
+    IMAGE_REGEX = re.compile(r'!\[(.*?)\]\((.*?)\)')
+    
     def on_page_markdown(self, markdown, page, config, **kwargs):
         if not self.config['enabled']:
             return markdown
@@ -127,6 +128,11 @@ class QuizPlugin(BasePlugin):
         order_items = []
         correct_answer_count = 0
         
+        def replace_image(match):
+            alt_text = match.group(1)
+            src_url = match.group(2)
+            return f'<br><img src="{src_url}" alt="{alt_text}" class="quiz-image">'
+        
         # --- PARSING PHASE ---
         for line in lines:
             line = line.strip()
@@ -139,6 +145,9 @@ class QuizPlugin(BasePlugin):
             if order_match:
                 item_number = int(order_match.group(1))
                 item_text = order_match.group(2).strip()
+                if self.IMAGE_REGEX.search(item_text):
+                   item_text = self.IMAGE_REGEX.sub(replace_image, item_text)
+                
                 order_items.append((item_number, item_text))
                 continue
 
@@ -152,6 +161,9 @@ class QuizPlugin(BasePlugin):
                 is_correct_str = "true" if is_correct_marker else "false"
                 ans_text = ans_match.group(2)
                 
+                if self.IMAGE_REGEX.search(ans_text):
+                    ans_text = self.IMAGE_REGEX.sub(replace_image, ans_text)
+                    
                 answers_html.append(
                     f'<button class="quiz-answer" data-correct="{is_correct_str}">{ans_text}</button>'
                 )
@@ -159,7 +171,10 @@ class QuizPlugin(BasePlugin):
                 # Regular text line (question body)
                 question_text_parts.append(line)
 
+        # question
         full_question_text = " ".join(question_text_parts)
+        if self.IMAGE_REGEX.search(full_question_text):
+            full_question_text = self.IMAGE_REGEX.sub(replace_image, full_question_text)
         
         # --- DROPDOWN PROCESSING ---
         # Only process dropdowns if we aren't doing an ordering question
@@ -190,6 +205,7 @@ class QuizPlugin(BasePlugin):
             if self.DROPDOWN_REGEX.search(full_question_text):
                 has_dropdown = True
                 full_question_text = self.DROPDOWN_REGEX.sub(replace_dropdown, full_question_text)
+
 
         # --- HTML GENERATION ---
         
