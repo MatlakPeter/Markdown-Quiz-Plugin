@@ -8,10 +8,13 @@ Vestibulum et scelerisque metus, sit amet varius odio. Aenean molestie nibh ac m
 
 Quisque porttitor lorem id ultrices facilisis. Duis hendrerit mauris et mauris malesuada ornare. Praesent ac eros fringilla, placerat lorem ut, gravida velit. Aenean nec euismod ante. Nullam blandit neque at mauris faucibus sollicitudin. Fusce et massa in eros fermentum molestie. Donec tortor purus, porttitor ac neque vitae, tincidunt mattis mauris. Pellentesque elementum consectetur commodo. Etiam a vehicula diam, eu commodo nulla. Donec in ornare tortor, a dignissim libero. Sed eu convallis elit, nec consequat dolor. Cras sollicitudin scelerisque interdum. Nulla sit amet aliquam enim, ut tempus urna. Pellentesque volutpat, sem a aliquet viverra, sem dolor aliquet dolor, sit amet feugiat nibh neque fringilla sem. Pellentesque rhoncus a erat ultrices scelerisque. 
 
-@start
+@START
+@time_limit: 100
+@title: my quiz
+@shuffle_questions: true
 ---
 What is 2 + 2?
-[x] 3
+[] 3
 [x] 4
 [] 5
 ---
@@ -20,7 +23,7 @@ What is the capital of France?
 [] London
 [] Berlin
 ---
-@end
+@END
 
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eu lobortis justo, at bibendum odio. In tincidunt purus at massa porttitor pellentesque. Nullam ac nulla justo. Sed at felis vitae nunc pellentesque accumsan ut non ligula. Nulla facilisi. Vivamus efficitur tortor ac felis placerat blandit. Etiam feugiat nisi sit amet metus fermentum ultrices. In elit turpis, rutrum a gravida at, suscipit eget metus.
@@ -33,4 +36,4 @@ Vestibulum et scelerisque metus, sit amet varius odio. Aenean molestie nibh ac m
 
 Quisque porttitor lorem id ultrices facilisis. Duis hendrerit mauris et mauris malesuada ornare. Praesent ac eros fringilla, placerat lorem ut, gravida velit. Aenean nec euismod ante. Nullam blandit neque at mauris faucibus sollicitudin. Fusce et massa in eros fermentum molestie. Donec tortor purus, porttitor ac neque vitae, tincidunt mattis mauris. Pellentesque elementum consectetur commodo. Etiam a vehicula diam, eu commodo nulla. Donec in ornare tortor, a dignissim libero. Sed eu convallis elit, nec consequat dolor. Cras sollicitudin scelerisque interdum. Nulla sit amet aliquam enim, ut tempus urna. Pellentesque volutpat, sem a aliquet viverra, sem dolor aliquet dolor, sit amet feugiat nibh neque fringilla sem. Pellentesque rhoncus a erat ultrices scelerisque. 
 @dasjbdjas
-include(quiz.md)
+@include: quiz.md, easy
