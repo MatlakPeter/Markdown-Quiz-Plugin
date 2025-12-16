@@ -230,12 +230,17 @@ class QuizPlugin(BasePlugin):
             # Add Header (Timer/Progress Bar)
             html_output.append("""
                 <div class="quiz-header">
+                    
                     <div class="quiz-timer-display">
                         Time Left: <span id="time-display"></span>
                     </div>
+                    
                     <div class="quiz-progress-container">
                         <div class="quiz-progress-bar"></div>
                     </div>
+                    
+                    <span class="quiz-status-text"></span>
+                    
                 </div>
             """)
             
