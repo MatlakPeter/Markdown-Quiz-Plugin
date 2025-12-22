@@ -183,6 +183,10 @@ html, body {
     border: 2px solid #b02a37;
 }
 
+.quiz-answer.shouldbecorrect{
+    border: 2px solid green;
+}
+
 /* dropdown */
 .quiz-dropdown {
     background-color:#2f2f64;
@@ -273,6 +277,17 @@ html, body {
     
 }
 
+.quiz-match-pair.correct{
+    background-color: #28a745;
+    color: white;
+    border: 2px solid #1e7e34;
+}
+
+.quiz-match-pair.incorrect{
+    background-color: #dc3545; 
+    color: white;              
+    border: 2px solid #b02a37;
+}
 
 /* Center solved pair list */
 .quiz-match-solved-area {
@@ -302,6 +317,31 @@ html, body {
     cursor: grabbing !important;
 }
 
+.quiz-feedback-msg{
+    margin-top : 15px;
+    padding : 10px;
+    border-radius :5px;
+}
+
+/* check button */
+.quiz-btn-check-answer {
+    /* --- ALIGNMENT --- */
+    align-self: flex-end;    /* Forces this item to the right side of the flex column */
+    margin-top: 20px;        /* Keep top spacing */
+    margin-left: auto;       /* Optional: technically helps push right, but align-self does the heavy lifting */
+    margin-right: 0;        
+ 
+    width: fit-content;
+    min-width: 150px;
+    padding: 10px 20px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+}
 /* navigation buttons: Next, Previous, Submit */
 .quiz-nav-next,
 .quiz-nav-previous,

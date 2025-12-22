@@ -44,19 +44,22 @@ class QuizPlugin(BasePlugin):
         else:
             log.warning("[QuizPlugin] 'assets' directory not found. CSS/JS might be missing.")
 
-    # --- REGEX DEFINITIONS ---
+# --- REGEX DEFINITIONS ---
+    # 1. Main Container & Inclusion Rules
     INCLUDE_REGEX = re.compile(r'^\s*@include:\s*(.+)$', flags=re.MULTILINE)
     QUIZ_BLOCK_REGEX = re.compile(r'@START(.*?)@END', flags=re.DOTALL)
+    
+    # 2. Global Metadata & Structural Rules
+    QUIZ_META_LINE_REGEX = re.compile(r'^\s*@(\w+)\s*:\s*(.+)$', re.MULTILINE)
+    QUIZ_ID_REGEX = re.compile(r'@id:\s*(.+)', flags=re.IGNORECASE)
     QUESTION_SPLIT_REGEX = re.compile(r'(?:^|\n)\s*---\s*(?:\n|$)')
+    
+    # 3. Specific Question Syntax (Dropdown, Ordering, Matching, Images)
     ANSWER_REGEX = re.compile(r'^\s*\[(x|\s)?\]\s*(.*)', flags=re.MULTILINE)
     DROPDOWN_REGEX = re.compile(r'\{\{(.+?)\}\}')
     ORDER_ITEM_REGEX = re.compile(r'^\s*\((\d+)\.\)\s*(.*)$', flags=re.MULTILINE | re.UNICODE)
-    IMAGE_REGEX = re.compile(r'!\[(.*?)\]\((.*?)\)')
-    QUIZ_ID_REGEX = re.compile(r'@id:\s*(.+)', flags= re.IGNORECASE)
     MATCHING_REGEX = re.compile(r'^\s*\{(.+?)\|(.+?)\}', flags=re.MULTILINE)
-    # REGEX FOR DATA PROCESSING 
-    QUIZ_BLOCK_REGEX = re.compile(r'@START(.*?)@END', flags=re.DOTALL)
-    QUIZ_META_LINE_REGEX = re.compile(r'^\s*@(\w+)\s*:\s*(.+)$', re.MULTILINE)
+    IMAGE_REGEX = re.compile(r'!\[(.*?)\]\((.*?)\)')
 
     def _extract_quiz_meta(self, block_content):
         meta = {}
@@ -395,6 +398,7 @@ class QuizPlugin(BasePlugin):
                         {"".join(right_items)}
                     </div>
                 </div>
+                <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
             </div>
             '''
         # Ordering Question
@@ -416,6 +420,7 @@ class QuizPlugin(BasePlugin):
                 <div class="quiz-ordering-list">
                     {"".join(list_items_html)}
                 </div>
+                <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
             </div>
             '''
 
@@ -424,6 +429,7 @@ class QuizPlugin(BasePlugin):
             return f'''
             <div class="quiz-question-block" data-question-index="{index}" data-type="dropdown"{display_style}>
                 <p class="quiz-question">{full_question_text}</p>
+                <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
             </div>
             '''
 
@@ -440,5 +446,6 @@ class QuizPlugin(BasePlugin):
         <div class="quiz-question-block" data-question-index="{index}"{data_type_attr}{display_style}>
             <p class="quiz-question">{full_question_text}</p>
             {answers_block}
+             <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
         </div>
         '''

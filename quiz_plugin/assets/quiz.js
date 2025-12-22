@@ -40,6 +40,7 @@ function initializeQuiz(container) {
 
     // 2. Quiz State
     let currentIndex = 0;
+    let feedbackType = container.getAttribute("data-feedback-mode")
 
     // --- NEW RANDOMIZATION STATE ---
     let questionOrder = []; // Stores the physical order of question indices [2, 0, 3, 1]
@@ -60,6 +61,7 @@ function initializeQuiz(container) {
             if (timerDisplayContainer) {
                 timerDisplayContainer.style.display = 'block';
             }
+
         }
     }
 
@@ -74,7 +76,7 @@ function initializeQuiz(container) {
 
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
-                handleQuizSubmit(true); // Auto-submit on time expired
+                handleQuizSubmit(true);
             }
         }, 1000);
     }
@@ -135,7 +137,6 @@ function initializeQuiz(container) {
         submitBtn.style.display = isLast ? "inline-block" : "none";
     }
 
-
     function handleQuizSubmit(timeExpired = false) {
         stopTimer();
 
@@ -175,7 +176,9 @@ function initializeQuiz(container) {
 
 
     // 3. Setup Questions (Shuffle answers, init dropdowns)
-    questions.forEach(setupQuestion);
+    questions.forEach((questionBlock) => {
+        setupQuestion(questionBlock, feedbackType);
+    });
 
     // --- NEW RANDOMIZATION EXECUTION ---
     if (shouldShuffle) {
@@ -224,10 +227,18 @@ function initializeQuiz(container) {
  * Functions responsible for preparing questions and handling user selection.
  * =============================================================================
  */
-function setupQuestion(questionBlock) {
+function setupQuestion(questionBlock, feedbackType) {
     const answerContainer = questionBlock.querySelector(".quiz-answer-container");
     const dropdown = questionBlock.querySelector(".quiz-dropdown");
     const answerButtons = questionBlock.querySelectorAll(".quiz-answer");
+    const checkButton = questionBlock.querySelector(".quiz-btn-check-answer")
+
+    if (checkButton) {
+        checkButton.style.display = feedbackType === "immediate" ? "block" : "none";
+        checkButton.addEventListener('click', function() {
+            handleCheckButton(this, questionBlock);
+        });
+    }
 
     // A. Handle standard buttons (Multiple/Single Choice)
     if (answerContainer && answerButtons.length > 0) {
@@ -253,8 +264,118 @@ function setupQuestion(questionBlock) {
     if (questionBlock.dataset.type === "matching") {
         setupMatching(questionBlock);
     }
+
 }
 
+function handleCheckButton(btn, questionBlock){
+    btn.disabled = true;
+    const type = questionBlock.dataset.type;
+    const quizFeedback = questionBlock.querySelector('.quiz-feedback-content')
+    if(quizFeedback)
+        quizFeedback.style.display = "block"
+    let isCorrect = false;
+    let feedbackText = "";
+
+    // single , multiple
+    if(type === "single" || type === "multiple"){
+        const allAnswers = questionBlock.querySelectorAll(".quiz-answer")
+        const userSelected = Array.from(allAnswers).filter(a => a.classList.contains("selected"));
+        const correctAnswers = Array.from(allAnswers).filter(a => a.dataset.correct === 'true');
+
+        isCorrect = (userSelected.length === correctAnswers.length) && 
+                    userSelected.every(a => a.dataset.correct === 'true')
+
+        allAnswers.forEach(a => {
+            a.disabled = true
+            if (a.classList.contains('selected')) {
+                a.classList.add(a.dataset.correct === 'true' ? 'correct' : 'incorrect')
+            } 
+            else if (a.dataset.correct === 'true') {
+                a.classList.add('shouldbecorrect'); 
+            }
+        })
+    }
+
+    // dropdown
+    else if(type === 'dropdown'){
+        const dropdown = questionBlock.querySelector('.quiz-dropdown')
+        dropdown.disabled = true
+        let selectedOption, correctAnswerDisplay;
+        ({isCorrect, selectedOption, correctAnswerDisplay} = reportDropdown(questionBlock, 'SIXSEVENSIXSEVENSIXSEVEN', false))
+        
+
+        if(selectedOption.dataset.correct === 'true'){
+            dropdown.style.border = "2px solid #1e7e34";
+            dropdown.style.backgroundColor = "#28a745";
+        }
+        else{
+            dropdown.style.border = "2px solid #b02a37";
+            dropdown.style.backgroundColor = "#dc3545";
+            feedbackText = `Correct Answer: <strong>${correctAnswerDisplay}</strong>`;
+        }
+
+    }
+    // ordering
+    else if(type === 'ordering'){
+        const items = Array.from(questionBlock.querySelectorAll('.quiz-order-item'))
+        let correctOrder;
+        items.forEach((item, pos) => {
+            item.style.pointerEvents = 'none';
+
+            if(Number(item.dataset.correctOrder) === pos + 1){
+                item.style.backgroundColor = "#28a745";
+                item.style.border = "2px solid #1e7e34";
+            } else {
+                item.style.border = "2px solid #b02a37";
+                item.style.backgroundColor = "#dc3545";
+            }
+        });
+        ({isCorrect, correctOrder} = reportOrdering(questionBlock, 'ma plictisex', false))
+        if(!isCorrect){
+            feedbackText = `Correct answers: ${correctOrder}`
+        }
+    }
+    // matching
+    else if(type === 'matching'){
+        const solvedArea = questionBlock.querySelector('.quiz-match-solved-area')
+        const userPairs = Array.from(solvedArea.querySelectorAll('.quiz-match-pair'));
+        let correctPairs = ""
+        userPairs.forEach(pair => {
+            pair.style.pointerEvents = 'none';
+            
+            if(pair.dataset.pairId === pair.dataset.userRight){
+                pair.classList.add('correct');
+            }else{
+                pair.classList.add('incorrect');
+            }
+        })
+        const remainingItems = questionBlock.querySelectorAll('.quiz-match-item');
+        remainingItems.forEach(i => i.style.pointerEvents = 'none');
+
+        ({isCorrect, correctPairs} = reportMatching(questionBlock, 'picioarele epilate sunt ca sarea in bucate', false))
+        if(!isCorrect){
+            feedbackText = `Correct answer: ${correctPairs}`
+        }
+    }
+
+    // feedback
+    feedbackMsg = document.createElement('div');
+    feedbackMsg.className = 'quiz-feedback-msg';
+    questionBlock.appendChild(feedbackMsg);
+
+    if (isCorrect) {
+        feedbackMsg.innerHTML = "<strong>Correct!</strong>";
+        feedbackMsg.style.backgroundColor = "#d4edda";
+        feedbackMsg.style.color = "#28a745";
+        feedbackMsg.style.border = "1px solid #c3e6cb";
+    } else {
+        feedbackMsg.innerHTML = `<strong>Incorrect.</strong> <br>${feedbackText}`;
+        feedbackMsg.style.backgroundColor = "#f8d7da";
+        feedbackMsg.style.color = "#dc3545";
+        feedbackMsg.style.border = "1px solid #f5c6cb";
+    }
+    
+}
 function handleSelection(clickedButton, type, allButtons) {
     const isSelected = clickedButton.classList.contains("selected");
 
@@ -514,7 +635,7 @@ function reportQuestion(questionElement, index) {
     return createReportCard(index, questionText, isCorrect, formatList(userSelected), formatList(correctAnswers));
 }
 
-function reportDropdown(questionBlock, index) {
+function reportDropdown(questionBlock, index, feedbackEnd = true) {
     const questionTextElement = questionBlock.querySelector('.quiz-question');
     const dropdown = questionBlock.querySelector('.quiz-dropdown');
 
@@ -522,8 +643,8 @@ function reportDropdown(questionBlock, index) {
     let userAnswerDisplay = "None";
     let correctAnswerDisplay = "";
 
+    const selectedOption = dropdown.options[dropdown.selectedIndex];
     if (dropdown) {
-        const selectedOption = dropdown.options[dropdown.selectedIndex];
 
         // Find correct text
         dropdown.querySelectorAll('option').forEach(option => {
@@ -547,11 +668,13 @@ function reportDropdown(questionBlock, index) {
         placeholder.style.fontWeight = "bold";
         dropdownInClone.parentNode.replaceChild(placeholder, dropdownInClone);
     }
+    if(feedbackEnd)
+        return createReportCard(index, questionClone.innerHTML, isCorrect, userAnswerDisplay, correctAnswerDisplay);
 
-    return createReportCard(index, questionClone.innerHTML, isCorrect, userAnswerDisplay, correctAnswerDisplay);
+    return {isCorrect, selectedOption: selectedOption, correctAnswerDisplay: correctAnswerDisplay}
 }
 
-function reportOrdering(questionElement, index) {
+function reportOrdering(questionElement, index, feedbackEnd = true) {
     const questionText = questionElement.querySelector('.quiz-question').innerHTML;
     const items = Array.from(questionElement.querySelectorAll('.quiz-order-item'));
 
@@ -561,14 +684,18 @@ function reportOrdering(questionElement, index) {
 
     const correctOrder = items.slice()
         .sort((a, b) => Number(a.dataset.correctOrder) - Number(b.dataset.correctOrder))
-        .map(i => i.innerText)
+        .map(i => i.innerHTML)
         .join(", ");
 
-    return createReportCard(index, questionText, isCorrect, userOrder, correctOrder);
+    if(feedbackEnd)
+        return createReportCard(index, questionText, isCorrect, userOrder, correctOrder);
+    return {
+        isCorrect,
+        correctOrder: correctOrder
+    }
 }
 
-// ---------- reporting for matching ----------
-function reportMatching(questionBlock, index) {
+function reportMatching(questionBlock, index, feedbackEnd = true) {
     const questionText = questionBlock.querySelector(".quiz-question").innerHTML;
 
     // Left & right items
@@ -607,13 +734,17 @@ function reportMatching(questionBlock, index) {
         userPairs.length === correctPairs.length &&
         userPairs.every(up => up.left === up.right);
 
-    return createReportCard(
-        index,
-        questionText,
-        isCorrect,
-        userPairs.map(p => p.label).join(", ") || "<em>None</em>",
-        correctPairs.map(p => p.label).join(", ")
-    );
+    if(feedbackEnd)
+        return createReportCard(
+            index,
+            questionText,
+            isCorrect,
+            userPairs.map(p => p.label).join(", ") || "<em>None</em>",
+            correctPairs.map(p => p.label).join(", ")
+        );
+    return {isCorrect, 
+            correctPairs: correctPairs.map(p => p.label).join(", ")
+    }
 }
 
 // Reusable HTML generator for reports

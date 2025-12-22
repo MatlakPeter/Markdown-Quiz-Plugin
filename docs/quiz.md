@@ -2,6 +2,7 @@
 @author: project system development
 @id: easy
 @shuffle_questions: true
+@feedback_mode: end
 ---
 What is 2 + 2?
 [] 3

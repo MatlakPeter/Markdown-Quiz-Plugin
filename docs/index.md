@@ -12,6 +12,7 @@ Quisque porttitor lorem id ultrices facilisis. Duis hendrerit mauris et mauris m
 @time_limit: 100
 @title: my quiz
 @shuffle_questions: true
+@feedback_mode: immediate
 ---
 What is 2 + 2?
 [] 3
