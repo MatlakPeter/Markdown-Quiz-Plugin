@@ -150,11 +150,11 @@ function initializeQuiz(container) {
             const currentActualIndex = questionOrder[currentIndex];
             questions[currentActualIndex].style.display = "none";
         }
-        
+
         if (navContainer) navContainer.style.display = "none";
         if (progressBar) progressBar.style.width = "100%";
 
-        let timeTaken = null; 
+        let timeTaken = null;
         if (startTime !== null) {
             const endTime = Date.now();
             const elapsed = Math.floor((endTime - startTime) / 1000);
@@ -162,8 +162,8 @@ function initializeQuiz(container) {
         }
 
         // Pass timeTaken (which will be null if no timer was started)
-        const reportHTML = generateReport(container, timeTaken, questionOrder); 
-        
+        const reportHTML = generateReport(container, timeTaken, questionOrder);
+
         if (resultsDiv) {
             resultsDiv.innerHTML = reportHTML;
             resultsDiv.style.display = 'block';
@@ -235,7 +235,7 @@ function setupQuestion(questionBlock, feedbackType) {
 
     if (checkButton) {
         checkButton.style.display = feedbackType === "immediate" ? "block" : "none";
-        checkButton.addEventListener('click', function() {
+        checkButton.addEventListener('click', function () {
             handleCheckButton(this, questionBlock);
         });
     }
@@ -267,48 +267,48 @@ function setupQuestion(questionBlock, feedbackType) {
 
 }
 
-function handleCheckButton(btn, questionBlock){
+function handleCheckButton(btn, questionBlock) {
     btn.disabled = true;
     const type = questionBlock.dataset.type;
     const quizFeedback = questionBlock.querySelector('.quiz-feedback-content')
-    if(quizFeedback)
+    if (quizFeedback)
         quizFeedback.style.display = "block"
     let isCorrect = false;
     let feedbackText = "";
 
     // single , multiple
-    if(type === "single" || type === "multiple"){
+    if (type === "single" || type === "multiple") {
         const allAnswers = questionBlock.querySelectorAll(".quiz-answer")
         const userSelected = Array.from(allAnswers).filter(a => a.classList.contains("selected"));
         const correctAnswers = Array.from(allAnswers).filter(a => a.dataset.correct === 'true');
 
-        isCorrect = (userSelected.length === correctAnswers.length) && 
-                    userSelected.every(a => a.dataset.correct === 'true')
+        isCorrect = (userSelected.length === correctAnswers.length) &&
+            userSelected.every(a => a.dataset.correct === 'true')
 
         allAnswers.forEach(a => {
             a.disabled = true
             if (a.classList.contains('selected')) {
                 a.classList.add(a.dataset.correct === 'true' ? 'correct' : 'incorrect')
-            } 
+            }
             else if (a.dataset.correct === 'true') {
-                a.classList.add('shouldbecorrect'); 
+                a.classList.add('shouldbecorrect');
             }
         })
     }
 
     // dropdown
-    else if(type === 'dropdown'){
+    else if (type === 'dropdown') {
         const dropdown = questionBlock.querySelector('.quiz-dropdown')
         dropdown.disabled = true
         let selectedOption, correctAnswerDisplay;
-        ({isCorrect, selectedOption, correctAnswerDisplay} = reportDropdown(questionBlock, 'SIXSEVENSIXSEVENSIXSEVEN', false))
-        
+        ({ isCorrect, selectedOption, correctAnswerDisplay } = reportDropdown(questionBlock, 'SIXSEVENSIXSEVENSIXSEVEN', false))
 
-        if(selectedOption.dataset.correct === 'true'){
+
+        if (selectedOption.dataset.correct === 'true') {
             dropdown.style.border = "2px solid #1e7e34";
             dropdown.style.backgroundColor = "#28a745";
         }
-        else{
+        else {
             dropdown.style.border = "2px solid #b02a37";
             dropdown.style.backgroundColor = "#dc3545";
             feedbackText = `Correct Answer: <strong>${correctAnswerDisplay}</strong>`;
@@ -316,13 +316,13 @@ function handleCheckButton(btn, questionBlock){
 
     }
     // ordering
-    else if(type === 'ordering'){
+    else if (type === 'ordering') {
         const items = Array.from(questionBlock.querySelectorAll('.quiz-order-item'))
         let correctOrder;
         items.forEach((item, pos) => {
             item.style.pointerEvents = 'none';
 
-            if(Number(item.dataset.correctOrder) === pos + 1){
+            if (Number(item.dataset.correctOrder) === pos + 1) {
                 item.style.backgroundColor = "#28a745";
                 item.style.border = "2px solid #1e7e34";
             } else {
@@ -330,30 +330,30 @@ function handleCheckButton(btn, questionBlock){
                 item.style.backgroundColor = "#dc3545";
             }
         });
-        ({isCorrect, correctOrder} = reportOrdering(questionBlock, 'ma plictisex', false))
-        if(!isCorrect){
+        ({ isCorrect, correctOrder } = reportOrdering(questionBlock, 'ma plictisex', false))
+        if (!isCorrect) {
             feedbackText = `Correct answers: ${correctOrder}`
         }
     }
     // matching
-    else if(type === 'matching'){
+    else if (type === 'matching') {
         const solvedArea = questionBlock.querySelector('.quiz-match-solved-area')
         const userPairs = Array.from(solvedArea.querySelectorAll('.quiz-match-pair'));
         let correctPairs = ""
         userPairs.forEach(pair => {
             pair.style.pointerEvents = 'none';
-            
-            if(pair.dataset.pairId === pair.dataset.userRight){
+
+            if (pair.dataset.pairId === pair.dataset.userRight) {
                 pair.classList.add('correct');
-            }else{
+            } else {
                 pair.classList.add('incorrect');
             }
         })
         const remainingItems = questionBlock.querySelectorAll('.quiz-match-item');
         remainingItems.forEach(i => i.style.pointerEvents = 'none');
 
-        ({isCorrect, correctPairs} = reportMatching(questionBlock, 'picioarele epilate sunt ca sarea in bucate', false))
-        if(!isCorrect){
+        ({ isCorrect, correctPairs } = reportMatching(questionBlock, 'picioarele epilate sunt ca sarea in bucate', false))
+        if (!isCorrect) {
             feedbackText = `Correct answer: ${correctPairs}`
         }
     }
@@ -374,7 +374,7 @@ function handleCheckButton(btn, questionBlock){
         feedbackMsg.style.color = "#dc3545";
         feedbackMsg.style.border = "1px solid #f5c6cb";
     }
-    
+
 }
 function handleSelection(clickedButton, type, allButtons) {
     const isSelected = clickedButton.classList.contains("selected");
@@ -563,9 +563,9 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
 
     // If questionOrder is undefined (safety fallback), default to original order
     if (!questionOrder || questionOrder.length !== questions.length) {
-         questionOrder = Array.from({length: questions.length}, (_, i) => i);
+        questionOrder = Array.from({ length: questions.length }, (_, i) => i);
     }
-    
+
     // Check if we have a valid time to display (i.e., the timer was active)
     const displayTime = (timeTakenSeconds !== null && !isNaN(timeTakenSeconds) && timeTakenSeconds >= 0);
 
@@ -577,8 +577,8 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
     }
 
     questionOrder.forEach((actualIndex, displayIndex) => {
-        const q = questions[actualIndex]; 
-        
+        const q = questions[actualIndex];
+
         let result;
         const type = q.dataset.type;
 
@@ -587,8 +587,8 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
             result = reportOrdering(q, displayIndex);
         } else if (type === "dropdown") {
             result = reportDropdown(q, displayIndex);
-        } else if (type === "matching") { 
-            result = reportMatching(q, displayIndex); 
+        } else if (type === "matching") {
+            result = reportMatching(q, displayIndex);
         } else {
             result = reportQuestion(q, displayIndex);
         }
@@ -596,7 +596,7 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
         questionsHTML += result.html;
         if (result.isCorrect) totalScore++;
     });
-  
+
     const timeHtml = displayTime
         ? `<p style="font-size: 1em; margin-bottom: 20px;"> 
                Time Taken: <strong>${timeTakenDisplay}</strong>
@@ -668,31 +668,26 @@ function reportDropdown(questionBlock, index, feedbackEnd = true) {
         placeholder.style.fontWeight = "bold";
         dropdownInClone.parentNode.replaceChild(placeholder, dropdownInClone);
     }
-    if(feedbackEnd)
+    if (feedbackEnd)
         return createReportCard(index, questionClone.innerHTML, isCorrect, userAnswerDisplay, correctAnswerDisplay);
 
-    return {isCorrect, selectedOption: selectedOption, correctAnswerDisplay: correctAnswerDisplay}
+    return { isCorrect, selectedOption: selectedOption, correctAnswerDisplay: correctAnswerDisplay }
 }
 
-function reportOrdering(questionElement, index, feedbackEnd = true) {
+function reportOrdering(questionElement, index) {
     const questionText = questionElement.querySelector('.quiz-question').innerHTML;
     const items = Array.from(questionElement.querySelectorAll('.quiz-order-item'));
 
     const isCorrect = items.every((item, pos) => Number(item.dataset.correctOrder) === pos + 1);
 
-    const userOrder = items.map(i => i.innerHTML).join(", ");
+    const userOrder = items.map(item => `<div class="report-order-item">${item.innerHTML}</div>`).join(", ");
 
     const correctOrder = items.slice()
         .sort((a, b) => Number(a.dataset.correctOrder) - Number(b.dataset.correctOrder))
-        .map(i => i.innerHTML)
+        .map(item => `<div class="report-order-item">${item.innerHTML}</div>`) 
         .join(", ");
 
-    if(feedbackEnd)
-        return createReportCard(index, questionText, isCorrect, userOrder, correctOrder);
-    return {
-        isCorrect,
-        correctOrder: correctOrder
-    }
+    return createReportCard(index, questionText, isCorrect, userOrder, correctOrder);
 }
 
 function reportMatching(questionBlock, index, feedbackEnd = true) {
@@ -734,7 +729,7 @@ function reportMatching(questionBlock, index, feedbackEnd = true) {
         userPairs.length === correctPairs.length &&
         userPairs.every(up => up.left === up.right);
 
-    if(feedbackEnd)
+    if (feedbackEnd)
         return createReportCard(
             index,
             questionText,
@@ -742,8 +737,9 @@ function reportMatching(questionBlock, index, feedbackEnd = true) {
             userPairs.map(p => p.label).join(", ") || "<em>None</em>",
             correctPairs.map(p => p.label).join(", ")
         );
-    return {isCorrect, 
-            correctPairs: correctPairs.map(p => p.label).join(", ")
+    return {
+        isCorrect,
+        correctPairs: correctPairs.map(p => p.label).join(", ")
     }
 }
 
@@ -755,20 +751,24 @@ function createReportCard(index, questionText, isCorrect, userAns, correctAns) {
 
     const html = `
         <div style="margin-bottom: 15px; padding: 15px; border: 1px solid #ccc; border-left: 5px solid ${borderColor}; background: #fff; border-radius: 5px;">
-            <p style="margin: 0 0 10px 0; font-weight: bold;">
-                ${index + 1}. ${questionText} ${statusIcon}
-            </p>
-            <div style="font-size: 0.95em; color: #555;">
-                <div style="margin-bottom: 4px;">
-                    <strong>Your Answer:</strong> 
-                    <span style="color: ${userColor}">${userAns}</span>
+        <p style="margin: 0 0 10px 0; font-weight: bold;">
+            ${index + 1}. ${questionText} ${statusIcon}
+        </p>
+        <div style="font-size: 0.95em; color: #555;">
+            <div style="margin-bottom: 4px;">
+                <strong>Your Answer:</strong> 
+                <div style="color: ${userColor}; display: flex; gap: 5px; flex-wrap: wrap;">
+                    ${userAns}
                 </div>
-                <div>
-                    <strong>Correct Answer:</strong> 
-                    <span style="color: green">${correctAns}</span>
+            </div>
+            <div>
+                <strong>Correct Answer:</strong> 
+                <div style="color: green; display: flex; gap: 5px; flex-wrap: wrap;">
+                    ${correctAns}
                 </div>
             </div>
         </div>
+    </div>
     `;
     return { html, isCorrect };
 }
@@ -803,33 +803,33 @@ function formatTime(totalSeconds) {
 
 function shuffleQuestionOrder(container, questions) {
     // Create array of indices [0, 1, 2, ...]
-    const indices = Array.from({length: questions.length}, (_, i) => i);
-    
+    const indices = Array.from({ length: questions.length }, (_, i) => i);
+
     // Shuffle the indices
     shuffleArray(indices);
-    
+
     let questionContainer = container;
     const mainWrapper = container.querySelector(".quiz-main-wrapper");
     if (mainWrapper && mainWrapper.contains(questions[0])) {
         questionContainer = mainWrapper;
     }
-    
+
     const insertionPoint = questionContainer.querySelector(".quiz-navigation") || questionContainer.querySelector(".quiz-results");
-    
+
     if (!insertionPoint) {
         console.warn("Quiz navigation or results container missing. Questions appended at end.");
     }
 
     // Reorder DOM elements based on shuffled indices
     const questionArray = Array.from(questions);
-    
+
     // Remove all questions from container
     questionArray.forEach(q => q.remove());
-    
+
     // Add them back in shuffled order using insertBefore
     indices.forEach(index => {
         const questionElement = questionArray[index];
-        
+
         // If an insertion point exists, insert the question before it.
         if (insertionPoint) {
             questionContainer.insertBefore(questionElement, insertionPoint);
@@ -838,7 +838,7 @@ function shuffleQuestionOrder(container, questions) {
             questionContainer.appendChild(questionElement);
         }
     });
-    
+
     // Return the new logical order
     return indices;
 }
