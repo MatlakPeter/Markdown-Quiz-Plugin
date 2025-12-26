@@ -1,11 +1,3 @@
-site_name: Peter's MkDocs Site
-
+site_name: nice
 plugins:
-  - search
-  - quiz
-
-extra_css:
-  - css/quiz.css
-  
-extra_javascript:
-  - js/quiz.js
+        - quiz

@@ -1,9 +1,0 @@
-Metadata-Version: 2.4
-Name: mkdocs-quiz-plugin
-Version: 0.1.0
-Summary: A simple MkDocs plugin to insert a custom HTML component.
-Author: Peter
-Requires-Dist: mkdocs>=1.0
-Dynamic: author
-Dynamic: requires-dist
-Dynamic: summary
