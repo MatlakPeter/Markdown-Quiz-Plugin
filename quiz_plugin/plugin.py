@@ -61,16 +61,33 @@ class QuizPlugin(BasePlugin):
     MATCHING_REGEX = re.compile(r'^\s*\{(.+?)\|(.+?)\}', flags=re.MULTILINE)
     IMAGE_REGEX = re.compile(r'!\[(.*?)\]\((.*?)\)')
 
+    # 4. Explanations
+    EXPLANATION_REGEX = re.compile(r'^\s*@explanation:\s*(.*)$', flags=re.MULTILINE | re.IGNORECASE)
+
     def _extract_quiz_meta(self, block_content):
         meta = {}
 
+        # 1. Gather Metadata (Skipping explanation)
         for match in self.QUIZ_META_LINE_REGEX.finditer(block_content):
             key = match.group(1).lower()
+            
+            if key == 'explanation':
+                continue
             value = match.group(2).strip()
             meta[key] = value
 
-        cleaned = self.QUIZ_META_LINE_REGEX.sub('', block_content)
+        # 2. Clean content (Preserving explanation)
+        def replace_meta(match):
+            key = match.group(1).lower()
+            # If the tag is @explanation, return the original text (do not delete)
+            if key == 'explanation':
+                return match.group(0)
+            # Otherwise, delete the line
+            return ''
+
+        cleaned = self.QUIZ_META_LINE_REGEX.sub(replace_meta, block_content)
         return meta, cleaned
+
 
     def _render_start_screen(self, meta):
         if not meta:
@@ -277,8 +294,26 @@ class QuizPlugin(BasePlugin):
         # Substitute all @START...@END blocks using the replacement function
         return self.QUIZ_BLOCK_REGEX.sub(replace_quiz_block, markdown)
 
+    def _extract_explanation(self, question_text):
+        """
+        Searches for @explanation: directive in question text.
+        Returns: (cleaned_text, explanation_content)
+        - cleaned_text: question text with @explanation line removed
+        - explanation_content: the explanation markdown or None
+        """
+        match = self.EXPLANATION_REGEX.search(question_text)
+        
+        if match:
+            explanation_content = match.group(1).strip()
+            # Remove the entire @explanation line from the question text
+            cleaned_text = self.EXPLANATION_REGEX.sub('', question_text)
+            return cleaned_text, explanation_content
+        
+        return question_text, None
 
     def _render_single_question(self, text, index, layout='book'):
+        text, explanation = self._extract_explanation(text)
+
         lines = text.strip().split('\n')
         question_text_parts = []
         answers_html = []
@@ -372,6 +407,15 @@ class QuizPlugin(BasePlugin):
                 has_dropdown = True
                 full_question_text = self.DROPDOWN_REGEX.sub(replace_dropdown, full_question_text)
 
+        explanation_html = ""
+        if explanation:
+            # Store explanation as markdown, hidden by default
+            # JavaScript will reveal this in the report
+            explanation_html = f'''
+            <div class="quiz-explanation" style="display: none;" data-explanation-markdown="{self._escape_html_attr(explanation)}">
+                <div class="quiz-explanation-content">{explanation}</div>
+            </div>
+            '''
 
         # --- HTML GENERATION ---
 
@@ -402,6 +446,7 @@ class QuizPlugin(BasePlugin):
                     </div>
                 </div>
                 <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
+                {explanation_html}
             </div>
             '''
         # Ordering Question
@@ -424,6 +469,7 @@ class QuizPlugin(BasePlugin):
                     {"".join(list_items_html)}
                 </div>
                 <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
+                {explanation_html}
             </div>
             '''
 
@@ -433,6 +479,7 @@ class QuizPlugin(BasePlugin):
             <div class="quiz-question-block" data-question-index="{index}" data-type="dropdown"{display_style}>
                 <p class="quiz-question">{full_question_text}</p>
                 <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
+                {explanation_html}
             </div>
             '''
 
@@ -449,6 +496,15 @@ class QuizPlugin(BasePlugin):
         <div class="quiz-question-block" data-question-index="{index}"{data_type_attr}{display_style}>
             <p class="quiz-question">{full_question_text}</p>
             {answers_block}
-             <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
+            <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
+            {explanation_html}        
         </div>
         '''
+    def _escape_html_attr(self, text):
+        """Escape text for safe inclusion in HTML attribute values."""
+        return (text
+                .replace('&', '&amp;')
+                .replace('"', '&quot;')
+                .replace("'", '&#39;')
+                .replace('<', '&lt;')
+                .replace('>', '&gt;'))

@@ -43,6 +43,7 @@ function initializeQuiz(container) {
 
     // Quiz State
     let currentIndex = 0;
+
     let questionOrder = [];
     const shouldShuffle = container.getAttribute("data-shuffle-questions") === "true";
 
@@ -123,7 +124,7 @@ function initializeQuiz(container) {
             if (progressBarContainer) progressBarContainer.style.display = "none";
 
             if (navContainer) {
-                navContainer.style.display = "block"; 
+                navContainer.style.display = "block";
                 navContainer.style.textAlign = "center";
             }
 
@@ -158,10 +159,10 @@ function initializeQuiz(container) {
 
             // Update Progress
             if (statusText) {
-                statusText.style.display = "block"; 
+                statusText.style.display = "block";
                 statusText.textContent = `Question ${currentIndex + 1}/${questions.length}`;
             }
-            
+
             if (progressBar && questions.length > 0) {
                 const progressPercent = (currentIndex / questions.length) * 100;
                 progressBar.style.width = `${progressPercent}%`;
@@ -382,6 +383,33 @@ function handleCheckButton(btn, questionBlock) {
         feedbackMsg.style.backgroundColor = "#f8d7da";
         feedbackMsg.style.color = "#dc3545";
         feedbackMsg.style.border = "1px solid #f5c6cb";
+    }
+
+    //added for explanations
+    const explanationDiv = questionBlock.querySelector('.quiz-explanation');
+    
+    if (explanationDiv) {
+        const markdownContent = explanationDiv.getAttribute('data-explanation-markdown');
+        
+        if (markdownContent) {
+            const decoded = decodeHTMLEntities(markdownContent);
+            const rendered = renderMarkdownToHTML(decoded);
+            
+            explanationDiv.innerHTML = `
+                <div style="margin-top: 15px; padding: 12px; background-color: #e8f4f8; border-left: 4px solid #2196F3; border-radius: 4px;">
+                    <strong style="color: #1976D2;">Explanation:</strong>
+                    <div style="margin-top: 8px; color: #333;">
+                        ${rendered}
+                    </div>
+                </div>
+            `;
+            
+            // Show the div
+            explanationDiv.style.display = 'block';
+            
+            // Smoothly nudge the screen so the user sees the explanation
+            explanationDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
     }
 
 }
@@ -641,7 +669,9 @@ function reportQuestion(questionElement, index) {
 
     const formatList = (btns) => btns.map(b => b.innerHTML).join(', ') || '<em>None</em>';
 
-    return createReportCard(index, questionText, isCorrect, formatList(userSelected), formatList(correctAnswers));
+    const explanationHTML = extractExplanationHTML(questionElement);
+
+    return createReportCard(index, questionText, isCorrect, formatList(userSelected), formatList(correctAnswers), explanationHTML);
 }
 
 function reportDropdown(questionBlock, index, feedbackEnd = true) {
@@ -677,10 +707,17 @@ function reportDropdown(questionBlock, index, feedbackEnd = true) {
         placeholder.style.fontWeight = "bold";
         dropdownInClone.parentNode.replaceChild(placeholder, dropdownInClone);
     }
-    if (feedbackEnd)
-        return createReportCard(index, questionClone.innerHTML, isCorrect, userAnswerDisplay, correctAnswerDisplay);
 
-    return { isCorrect, selectedOption: selectedOption, correctAnswerDisplay: correctAnswerDisplay }
+    const explanationHTML = extractExplanationHTML(questionBlock);
+    if (feedbackEnd)
+        return createReportCard(index, questionClone.innerHTML, isCorrect, userAnswerDisplay, correctAnswerDisplay, explanationHTML);
+
+    return { 
+        isCorrect, 
+        selectedOption: selectedOption, 
+        correctAnswerDisplay: correctAnswerDisplay,
+        explanationHTML: explanationHTML 
+    };
 }
 
 function reportOrdering(questionElement, index) {
@@ -696,7 +733,9 @@ function reportOrdering(questionElement, index) {
         .map(item => `<div class="report-order-item">${item.innerHTML}</div>`)
         .join(", ");
 
-    return createReportCard(index, questionText, isCorrect, userOrder, correctOrder);
+    const explanationHTML = extractExplanationHTML(questionElement);
+
+    return createReportCard(index, questionText, isCorrect, userOrder, correctOrder, explanationHTML);
 }
 
 function reportMatching(questionBlock, index, feedbackEnd = true) {
@@ -737,6 +776,8 @@ function reportMatching(questionBlock, index, feedbackEnd = true) {
     const isCorrect =
         userPairs.length === correctPairs.length &&
         userPairs.every(up => up.left === up.right);
+    
+    const explanationHTML = extractExplanationHTML(questionBlock);
 
     if (feedbackEnd)
         return createReportCard(
@@ -744,40 +785,116 @@ function reportMatching(questionBlock, index, feedbackEnd = true) {
             questionText,
             isCorrect,
             userPairs.map(p => p.label).join(", ") || "<em>None</em>",
-            correctPairs.map(p => p.label).join(", ")
+            correctPairs.map(p => p.label).join(", "),
+            explanationHTML
         );
     return {
         isCorrect,
-        correctPairs: correctPairs.map(p => p.label).join(", ")
+        correctPairs: correctPairs.map(p => p.label).join(", "),
+        explanationHTML: explanationHTML
     }
 }
 
-// Reusable HTML generator for reports
-function createReportCard(index, questionText, isCorrect, userAns, correctAns) {
+// EXTRACT AND RENDER EXPLANATION FROM QUESTION BLOCK ---
+/**
+ * Extracts explanation content from a question block and returns rendered HTML.
+ * The explanation is stored in a hidden div with a data-explanation-markdown attribute.
+ * This function retrieves the markdown content and renders it as HTML with proper formatting.
+ * 
+ * @param {HTMLElement} questionElement - The question block element
+ * @returns {string} - HTML string containing the formatted explanation, or empty string if none exists
+ */
+function extractExplanationHTML(questionElement) {
+    const explanationDiv = questionElement.querySelector('.quiz-explanation');
+
+    if (!explanationDiv) {
+        return '';
+    }
+
+    // Get the markdown content from the data attribute
+    const markdownContent = explanationDiv.getAttribute('data-explanation-markdown');
+
+    if (!markdownContent) {
+        return '';
+    }
+
+    // Decode HTML entities
+    const decodedContent = decodeHTMLEntities(markdownContent);
+
+    // Render markdown to HTML (preserve links, formatting, etc.)
+    const renderedHTML = renderMarkdownToHTML(decodedContent);
+
+    return `
+        <div style="margin-top: 15px; padding: 12px; background-color: #e8f4f8; border-left: 4px solid #2196F3; border-radius: 4px;">
+            <strong style="color: #1976D2;">Explanation:</strong>
+            <div style="margin-top: 8px; color: #333;">
+                ${renderedHTML}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Decodes HTML entities in a string.
+ * Used to decode explanation content stored in data attributes.
+ * 
+ * @param {string} text - The text with HTML entities
+ * @returns {string} - The decoded text
+ */
+function decodeHTMLEntities(text) {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = text;
+    return textarea.value;
+}
+
+/**
+ * Renders simple markdown to HTML.
+ * Supports:
+ * - Inline links: [text](url)
+ * - Basic formatting (preserved as-is since it's already in HTML context)
+ * 
+ * This is a lightweight markdown renderer that preserves standard markdown links
+ * and converts them to clickable HTML anchors.
+ * 
+ * @param {string} markdown - The markdown text
+ * @returns {string} - The rendered HTML
+ */
+function renderMarkdownToHTML(markdown) {
+    // Convert markdown links [text](url) to HTML <a> tags
+    // This regex matches standard markdown link syntax
+    let html = markdown.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+        // Preserve the link exactly as written
+        return `<a href="${url}" style="color: #1976D2; text-decoration: underline;">${text}</a>`;
+    });
+
+    return html;
+}
+
+
+
+// Reusable HTML generator for reports 
+function createReportCard(index, questionText, isCorrect, userAns, correctAns, explanationHTML = '') {
     const statusIcon = isCorrect ? '✅' : '❌';
     const borderColor = isCorrect ? 'green' : 'red';
     const userColor = isCorrect ? 'green' : 'red';
 
     const html = `
         <div style="margin-bottom: 15px; padding: 15px; border: 1px solid #ccc; border-left: 5px solid ${borderColor}; background: #fff; border-radius: 5px;">
-        <p style="margin: 0 0 10px 0; font-weight: bold;">
-            ${index + 1}. ${questionText} ${statusIcon}
-        </p>
-        <div style="font-size: 0.95em; color: #555;">
-            <div style="margin-bottom: 4px;">
-                <strong>Your Answer:</strong> 
-                <div style="color: ${userColor}; display: flex; gap: 5px; flex-wrap: wrap;">
-                    ${userAns}
+            <p style="margin: 0 0 10px 0; font-weight: bold;">
+                ${index + 1}. ${questionText} ${statusIcon}
+            </p>
+            <div style="font-size: 0.95em; color: #555;">
+                <div style="margin-bottom: 4px;">
+                    <strong>Your Answer:</strong> 
+                    <span style="color: ${userColor}">${userAns}</span>
+                </div>
+                <div>
+                    <strong>Correct Answer:</strong> 
+                    <span style="color: green">${correctAns}</span>
                 </div>
             </div>
-            <div>
-                <strong>Correct Answer:</strong> 
-                <div style="color: green; display: flex; gap: 5px; flex-wrap: wrap;">
-                    ${correctAns}
-                </div>
-            </div>
+            ${explanationHTML}
         </div>
-    </div>
     `;
     return { html, isCorrect };
 }
