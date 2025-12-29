@@ -99,7 +99,7 @@ class QuizPlugin(BasePlugin):
             meta_items.append(f'<span class="quiz-meta-item"> Author: {meta["author"]}</span>')
         if "time_limit" in meta:
             minutes = int(int(meta["time_limit"]))
-            meta_items.append(f'<span class="quiz-meta-item"> Time: {minutes} Min</span>')
+            meta_items.append(f'<span class="quiz-meta-item"> Time: {minutes} seconds</span>')
 
         if meta_items:
             parts.append(f'''
@@ -202,9 +202,11 @@ class QuizPlugin(BasePlugin):
             
             # 3. Define Container Attributes
             # Ensure the 'id' meta is extracted (it's in quiz_meta due to _extract_quiz_meta)
+            layout_mode = self._normalize_choice(quiz_meta.get("layout"), allowed={"book", "list"}, default="book")
+            
             container_attrs = {
                 "id": quiz_meta.get("id"),
-                "layout": self._normalize_choice(quiz_meta.get("layout"), allowed={"book", "list"}, default="book"),
+                "layout": layout_mode,
                 "timer": quiz_meta.get("time_limit"),
                 "shuffle-questions": self._normalize_choice(quiz_meta.get("shuffle_questions"), allowed={"true", "false"}, default="false"),
                 "shuffle-answers": self._normalize_choice(quiz_meta.get("shuffle_answers"), allowed={"true", "false"}, default="true"),
@@ -221,7 +223,7 @@ class QuizPlugin(BasePlugin):
             # 4. Assemble HTML Output
             html_output = []
             
-            # Open the main quiz container (CRITICAL: Contains all quiz content)
+            # Open the main quiz container
             html_output.append(f'<div class="quiz-container" markdown="1" {data_attrs}>')
             
             # Add the Start Screen
@@ -249,29 +251,26 @@ class QuizPlugin(BasePlugin):
             
             # Add Questions
             for index, q_text in enumerate(questions):
-                q_html = self._render_single_question(q_text, index)
+                q_html = self._render_single_question(q_text, index, layout=layout_mode)
                 html_output.append(q_html)
 
             # Add Navigation/Footer
             html_output.append(f'''
-            <div class="quiz-navigation">
-                <button class="quiz-nav-previous" style="display: none;">Previous</button>  
-                <span class="quiz-status-text"></span>
-                <button class="quiz-nav-next">Next</button>
-                <button class="quiz-nav-submit" style="display: none;">Submit</button>
-            </div>
-            ''')
+                <div class="quiz-navigation">
+                    <button class="quiz-nav-previous" style="display: none;">Previous</button>  
+                    <span class="quiz-status-text"></span>
+                    <button class="quiz-nav-next">Next</button>
+                    <button class="quiz-nav-submit">Submit</button>  </div>
+                ''')
             
             # Add Results Div
             html_output.append('<div class="quiz-results"></div>')
 
-            # --- CRITICAL CLOSING FIX ---
             # Close the quiz-main-wrapper
             html_output.append('</div>') 
             
             # Close the quiz-container (PREVENTS CONTENT LEAKAGE)
             html_output.append('</div>') 
-            # --- END CRITICAL CLOSING FIX ---
 
             return "\n".join(html_output)
 
@@ -279,7 +278,7 @@ class QuizPlugin(BasePlugin):
         return self.QUIZ_BLOCK_REGEX.sub(replace_quiz_block, markdown)
 
 
-    def _render_single_question(self, text, index):
+    def _render_single_question(self, text, index, layout='book'):
         lines = text.strip().split('\n')
         question_text_parts = []
         answers_html = []
@@ -375,8 +374,12 @@ class QuizPlugin(BasePlugin):
 
 
         # --- HTML GENERATION ---
+
+        if layout == 'list':
+            display_style = ''
+        else:
+            display_style = ' style="display: none;"' if index > 0 else ''
         
-        display_style = ' style="display: none;"' if index > 0 else ''
         # Matching Question
         if match_pairs:
             left_items = []
