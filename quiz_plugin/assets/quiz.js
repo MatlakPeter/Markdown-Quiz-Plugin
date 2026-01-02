@@ -239,11 +239,23 @@ function initializeQuiz(container) {
  * =============================================================================
  */
 function setupQuestion(questionBlock, feedbackType) {
+    const questionTextElement = questionBlock.querySelector('.quiz-question');
+    
+    if (questionTextElement) {
+        if (questionTextElement.innerHTML.includes('&amp;lt;') || 
+            questionTextElement.innerHTML.includes('&amp;lsqb;')) {
+            
+            const decoder = document.createElement('textarea');
+            decoder.innerHTML = questionTextElement.innerHTML;
+            questionTextElement.innerHTML = decoder.value;
+        }
+    }
     const answerContainer = questionBlock.querySelector(".quiz-answer-container");
     const dropdown = questionBlock.querySelector(".quiz-dropdown");
     const answerButtons = questionBlock.querySelectorAll(".quiz-answer");
     const checkButton = questionBlock.querySelector(".quiz-btn-check-answer");
 
+  
     // 1. Handle the Check Answer Button Listener
     if (checkButton) {
         checkButton.addEventListener('click', function () {
@@ -311,7 +323,7 @@ function handleCheckButton(btn, questionBlock) {
         const dropdown = questionBlock.querySelector('.quiz-dropdown')
         dropdown.disabled = true
         let selectedOption, correctAnswerDisplay;
-        ({ isCorrect, selectedOption, correctAnswerDisplay } = reportDropdown(questionBlock, 'SIXSEVENSIXSEVENSIXSEVEN', false))
+        ({ isCorrect, selectedOption, correctAnswerDisplay } = reportDropdown(questionBlock, questionBlock.dataset.questionIndex, false))
 
 
         if (selectedOption.dataset.correct === 'true') {
@@ -340,7 +352,7 @@ function handleCheckButton(btn, questionBlock) {
                 item.style.backgroundColor = "#dc3545";
             }
         });
-        ({ isCorrect, correctOrder } = reportOrdering(questionBlock, 'ma plictisex', false))
+        ({ isCorrect, correctOrder } = reportOrdering(questionBlock, questionBlock.dataset.questionIndex, false))
         if (!isCorrect) {
             feedbackText = `Correct answers: ${correctOrder}`
         }
@@ -362,7 +374,7 @@ function handleCheckButton(btn, questionBlock) {
         const remainingItems = questionBlock.querySelectorAll('.quiz-match-item');
         remainingItems.forEach(i => i.style.pointerEvents = 'none');
 
-        ({ isCorrect, correctPairs } = reportMatching(questionBlock, 'picioarele epilate sunt ca sarea in bucate', false))
+        ({ isCorrect, correctPairs } = reportMatching(questionBlock, questionBlock.dataset.questionIndex, false))
         if (!isCorrect) {
             feedbackText = `Correct answer: ${correctPairs}`
         }
@@ -453,7 +465,11 @@ function setupDropdown(dropdown) {
 
     dropdown.innerHTML = '';
     if (placeholder) dropdown.appendChild(placeholder);
-    options.forEach(opt => dropdown.appendChild(opt));
+    options.forEach(opt => {
+        const val = opt.innerHTML; 
+        opt.innerHTML = val; 
+        dropdown.appendChild(opt);
+    });
 
     dropdown.selectedIndex = 0;
 }

@@ -2,6 +2,7 @@ import os
 import shutil
 import re
 import logging
+import html
 from mkdocs.plugins import BasePlugin
 from mkdocs.config import config_options
 
@@ -314,17 +315,17 @@ class QuizPlugin(BasePlugin):
     def _render_single_question(self, text, index, layout='book'):
         text, explanation = self._extract_explanation(text)
 
+        def replace_image(match):
+            safe_alt = html.escape(match.group(1)) 
+            src_url = match.group(2) 
+            return f'<br><img src="{src_url}" alt="{safe_alt}" class="quiz-image">'
+
         lines = text.strip().split('\n')
         question_text_parts = []
         answers_html = []
         order_items = []
         match_pairs = []
         correct_answer_count = 0
-        
-        def replace_image(match):
-            alt_text = match.group(1)
-            src_url = match.group(2)
-            return f'<br><img src="{src_url}" alt="{alt_text}" class="quiz-image">'
         
         # --- PARSING PHASE ---
         for line in lines:
@@ -335,8 +336,8 @@ class QuizPlugin(BasePlugin):
             # Check for Matching {A|B}
             matching_match = self.MATCHING_REGEX.match(normalized_line)
             if matching_match:
-                left_text = matching_match.group(1).strip()
-                right_text = matching_match.group(2).strip()
+                left_text = html.escape(matching_match.group(1).strip())
+                right_text = html.escape(matching_match.group(2).strip())
                 pair_id = f"{len(match_pairs)}"
                 match_pairs.append((left_text, right_text, pair_id))
                 continue
@@ -345,37 +346,50 @@ class QuizPlugin(BasePlugin):
             order_match = self.ORDER_ITEM_REGEX.match(normalized_line)
             if order_match:
                 item_number = int(order_match.group(1))
-                item_text = order_match.group(2).strip()
-                if self.IMAGE_REGEX.search(item_text):
-                   item_text = self.IMAGE_REGEX.sub(replace_image, item_text)
+                item_raw_text = order_match.group(2).strip()
                 
-                order_items.append((item_number, item_text))
+                # 1. Escape the text for security
+                item_html = html.escape(item_raw_text)
+                # 2. Re-insert images safely
+                if self.IMAGE_REGEX.search(item_raw_text):
+                    for m in self.IMAGE_REGEX.finditer(item_raw_text):
+                        safe_alt = html.escape(m.group(1))
+                        img_tag = f'<br><img src="{m.group(2)}" alt="{safe_alt}" class="quiz-image">'
+                        item_html = item_html.replace(html.escape(m.group(0)), img_tag)
+                
+                order_items.append((item_number, item_html))
                 continue
 
             # Check for Standard Answers: [x] Correct or [ ] Incorrect
             ans_match = self.ANSWER_REGEX.match(line)
             if ans_match:
-                is_correct_marker = ans_match.group(1) == 'x'
-                if is_correct_marker:
-                    correct_answer_count += 1
+                is_correct_str = "true" if ans_match.group(1) == 'x' else "false"
+                if is_correct_str == "true": correct_answer_count += 1
                 
-                is_correct_str = "true" if is_correct_marker else "false"
-                ans_text = ans_match.group(2)
+                ans_raw_text = ans_match.group(2).strip()
+                # 1. Escape for security
+                ans_html_text = html.escape(ans_raw_text)
+                # 2. Re-insert images safely
+                if self.IMAGE_REGEX.search(ans_raw_text):
+                    for m in self.IMAGE_REGEX.finditer(ans_raw_text):
+                        safe_alt = html.escape(m.group(1))
+                        img_tag = f'<br><img src="{m.group(2)}" alt="{safe_alt}" class="quiz-image">'
+                        ans_html_text = ans_html_text.replace(html.escape(m.group(0)), img_tag)
                 
-                if self.IMAGE_REGEX.search(ans_text):
-                    ans_text = self.IMAGE_REGEX.sub(replace_image, ans_text)
-                    
-                answers_html.append(
-                    f'<button class="quiz-answer" data-correct="{is_correct_str}">{ans_text}</button>'
-                )
+                answers_html.append(f'<button class="quiz-answer" data-correct="{is_correct_str}">{ans_html_text}</button>')
             else:
-                # Regular text line (question body)
                 question_text_parts.append(line)
 
         # question
-        full_question_text = " ".join(question_text_parts)
-        if self.IMAGE_REGEX.search(full_question_text):
-            full_question_text = self.IMAGE_REGEX.sub(replace_image, full_question_text)
+        raw_question_body = " ".join(question_text_parts)
+        full_question_text = html.escape(raw_question_body)
+        
+        # Safely re-insert images into the escaped question body
+        if self.IMAGE_REGEX.search(raw_question_body):
+            for m in self.IMAGE_REGEX.finditer(raw_question_body):
+                safe_alt = html.escape(m.group(1))
+                img_tag = f'<br><img src="{m.group(2)}" alt="{safe_alt}" class="quiz-image">'
+                full_question_text = full_question_text.replace(html.escape(m.group(0)), img_tag)
         
         # --- DROPDOWN PROCESSING ---
         # Only process dropdowns if we aren't doing an ordering question
@@ -385,20 +399,14 @@ class QuizPlugin(BasePlugin):
                 content = match.group(1)
                 raw_options = content.split('|')
                 
-                processed_options = []
-                for i, opt in enumerate(raw_options):
-                    opt = opt.strip()
-                    is_correct = "true" if i == 0 else "false"
-                    processed_options.append({"text": opt, "is_correct": is_correct})
-                
-                
-                
                 select_html = ['<select class="quiz-dropdown">']
-                select_html.append('<option disabled>Choose...</option>')
-                for item in processed_options:
-                    select_html.append(
-                        f'<option data-correct="{item["is_correct"]}">{item["text"]}</option>'
-                    )
+                select_html.append('<option disabled selected>Choose...</option>')
+                
+                for i, opt in enumerate(raw_options):
+                    safe_text = html.escape(opt.strip())
+                    is_correct = "true" if i == 0 else "false"
+                    select_html.append(f'<option data-correct="{is_correct}">{safe_text}</option>')
+                    
                 select_html.append('</select>')
                 return "".join(select_html)
 
