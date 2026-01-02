@@ -240,11 +240,11 @@ function initializeQuiz(container) {
  */
 function setupQuestion(questionBlock, feedbackType) {
     const questionTextElement = questionBlock.querySelector('.quiz-question');
-    
+
     if (questionTextElement) {
-        if (questionTextElement.innerHTML.includes('&amp;lt;') || 
+        if (questionTextElement.innerHTML.includes('&amp;lt;') ||
             questionTextElement.innerHTML.includes('&amp;lsqb;')) {
-            
+
             const decoder = document.createElement('textarea');
             decoder.innerHTML = questionTextElement.innerHTML;
             questionTextElement.innerHTML = decoder.value;
@@ -255,7 +255,7 @@ function setupQuestion(questionBlock, feedbackType) {
     const answerButtons = questionBlock.querySelectorAll(".quiz-answer");
     const checkButton = questionBlock.querySelector(".quiz-btn-check-answer");
 
-  
+
     // 1. Handle the Check Answer Button Listener
     if (checkButton) {
         checkButton.addEventListener('click', function () {
@@ -399,14 +399,14 @@ function handleCheckButton(btn, questionBlock) {
 
     //added for explanations
     const explanationDiv = questionBlock.querySelector('.quiz-explanation');
-    
+
     if (explanationDiv) {
         const markdownContent = explanationDiv.getAttribute('data-explanation-markdown');
-        
+
         if (markdownContent) {
             const decoded = decodeHTMLEntities(markdownContent);
             const rendered = renderMarkdownToHTML(decoded);
-            
+
             explanationDiv.innerHTML = `
                 <div style="margin-top: 15px; padding: 12px; background-color: #e8f4f8; border-left: 4px solid #2196F3; border-radius: 4px;">
                     <strong style="color: #1976D2;">Explanation:</strong>
@@ -415,10 +415,10 @@ function handleCheckButton(btn, questionBlock) {
                     </div>
                 </div>
             `;
-            
+
             // Show the div
             explanationDiv.style.display = 'block';
-            
+
             // Smoothly nudge the screen so the user sees the explanation
             explanationDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
@@ -466,8 +466,8 @@ function setupDropdown(dropdown) {
     dropdown.innerHTML = '';
     if (placeholder) dropdown.appendChild(placeholder);
     options.forEach(opt => {
-        const val = opt.innerHTML; 
-        opt.innerHTML = val; 
+        const val = opt.innerHTML;
+        opt.innerHTML = val;
         dropdown.appendChild(opt);
     });
 
@@ -728,11 +728,11 @@ function reportDropdown(questionBlock, index, feedbackEnd = true) {
     if (feedbackEnd)
         return createReportCard(index, questionClone.innerHTML, isCorrect, userAnswerDisplay, correctAnswerDisplay, explanationHTML);
 
-    return { 
-        isCorrect, 
-        selectedOption: selectedOption, 
+    return {
+        isCorrect,
+        selectedOption: selectedOption,
         correctAnswerDisplay: correctAnswerDisplay,
-        explanationHTML: explanationHTML 
+        explanationHTML: explanationHTML
     };
 }
 
@@ -742,12 +742,16 @@ function reportOrdering(questionElement, index) {
 
     const isCorrect = items.every((item, pos) => Number(item.dataset.correctOrder) === pos + 1);
 
-    const userOrder = items.map(item => `<div class="report-order-item">${item.innerHTML}</div>`).join(", ");
+    const userOrder = `<div style="display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 10px;">` +
+        items.map(item => `<span class="report-order-item">${item.innerHTML}</span>`).join("") +
+        `</div>`;
 
-    const correctOrder = items.slice()
-        .sort((a, b) => Number(a.dataset.correctOrder) - Number(b.dataset.correctOrder))
-        .map(item => `<div class="report-order-item">${item.innerHTML}</div>`)
-        .join(", ");
+    const correctOrder = `<div style="display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 10px;">` +
+        items.slice()
+            .sort((a, b) => Number(a.dataset.correctOrder) - Number(b.dataset.correctOrder))
+            .map(item => `<span class="report-order-item">${item.innerHTML}</span>`)
+            .join("") +
+        `</div>`;
 
     const explanationHTML = extractExplanationHTML(questionElement);
 
@@ -792,7 +796,7 @@ function reportMatching(questionBlock, index, feedbackEnd = true) {
     const isCorrect =
         userPairs.length === correctPairs.length &&
         userPairs.every(up => up.left === up.right);
-    
+
     const explanationHTML = extractExplanationHTML(questionBlock);
 
     if (feedbackEnd)
