@@ -683,11 +683,23 @@ function reportQuestion(questionElement, index) {
         if (btn.dataset.correct === "false") isCorrect = false;
     });
 
-    const formatList = (btns) => btns.map(b => b.innerHTML).join(', ') || '<em>None</em>';
+    const formatReportIcons = (btns) => {
+        if (btns.length === 0) return '<em>None</em>';
+        return `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">` + 
+               btns.map(b => `<span class="report-answer-item">${b.innerHTML}</span>`).join("") + 
+               `</div>`;
+    };
 
     const explanationHTML = extractExplanationHTML(questionElement);
 
-    return createReportCard(index, questionText, isCorrect, formatList(userSelected), formatList(correctAnswers), explanationHTML);
+    return createReportCard(
+        index, 
+        questionText, 
+        isCorrect, 
+        formatReportIcons(userSelected), 
+        formatReportIcons(correctAnswers), 
+        explanationHTML
+    );
 }
 
 function reportDropdown(questionBlock, index, feedbackEnd = true) {
