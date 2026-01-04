@@ -736,26 +736,29 @@ function reportDropdown(questionBlock, index, feedbackEnd = true) {
     };
 }
 
-function reportOrdering(questionElement, index) {
+function reportOrdering(questionElement, index, feedbackEnd = true) {
     const questionText = questionElement.querySelector('.quiz-question').innerHTML;
     const items = Array.from(questionElement.querySelectorAll('.quiz-order-item'));
 
     const isCorrect = items.every((item, pos) => Number(item.dataset.correctOrder) === pos + 1);
 
-    const userOrder = `<div style="display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 10px;">` +
-        items.map(item => `<span class="report-order-item">${item.innerHTML}</span>`).join("") +
+    const userOrder = `<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;">` + 
+        items.map(item => `<span class="report-order-item">${item.innerHTML}</span>`).join("") + 
         `</div>`;
 
-    const correctOrder = `<div style="display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 10px;">` +
+    const correctOrder = `<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;">` + 
         items.slice()
             .sort((a, b) => Number(a.dataset.correctOrder) - Number(b.dataset.correctOrder))
             .map(item => `<span class="report-order-item">${item.innerHTML}</span>`)
-            .join("") +
+            .join("") + 
         `</div>`;
 
-    const explanationHTML = extractExplanationHTML(questionElement);
-
-    return createReportCard(index, questionText, isCorrect, userOrder, correctOrder, explanationHTML);
+    if(feedbackEnd)
+        return createReportCard(index, questionText, isCorrect, userOrder, correctOrder);
+    return {
+        isCorrect,
+        correctOrder: correctOrder
+    }
 }
 
 function reportMatching(questionBlock, index, feedbackEnd = true) {
