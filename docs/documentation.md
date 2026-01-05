@@ -4,117 +4,81 @@
 
 This project is a quiz plugin that allows users to create and take quizzes using a simple Markdown-like syntax.
 
-The MkDocs Quiz Plugin transforms static documentation into engaging, interactive learning experiences. This toolkit provides multiple question formats, all achievable through simple Markdown syntax.
+The MkDocs Quiz Plugin transforms static documentation into engaging, interactive learning experiences through diverse question formats.
 
-It addresses key challenges in modern documentation: it transforms passive reading into active learning to improve retention, provides immediate verification to identify comprehension gaps, and enables interactive content creation without technical expertise.
+It addresses key challenges in modern documentation: it transforms passive reading into active learning, provides immediate verification and enables interactive content creation without technical expertise.
 
-By integrating knowledge checkpoints directly into learning materials, it ensures readers actively engage with content, moving beyond passive consumption to confirmed understanding.
 
 ## Getting Started
 
-To get started with using this quiz plugin, include the `quiz.css` and `script.js` files in your HTML file. Then, create your quiz using the specified markdown format within a container element.
 
-## Syntax Specifications
+Follow these steps to get the quiz plugin up and running in your MkDocs project.
 
-The quiz is created using a specific Markdown syntax:
+### Prerequisites
 
+Before you begin, ensure you have the following installed:
+
+>*   Python 3.8 or higher
+>*   MkDocs 1.0 or higher
+
+You can install MkDocs using pip if you don't have it already:
+```bash
+pip install mkdocs
 ```
-@start
-@title: My Quiz
-@description: This is a description parsed from the markdown.
-@author: John Doe
-@timer_limit: 600
-@layout: book 
-@feedback_mode: immediate
-@id: easy //only for imported quizzes - optional
 
-@include: additional_quizzes.md, id1, id2, …
----
-What is 2 + 2?
-[] 3
-[x] 4
-[] 5
----
-Which of the following countries are officially located on the continent of South America?
-[] Costa Rica
-[x] Bolivia
-[] Mexico
-[x] Uruguay
-[x] Suriname
----
-The octopus has {{3|1|4|8}} hearts
----
-Put the planets in order from the sun
-(1) Mercury
-(2) Venus
-(3) Earth
-(4) Mars
----
-Identify the object shown below:
-![Apple logo](/apple_logo.png)
-- [ ] Microsoft
-- [x] Apple
-- [ ] Google
-- [ ] Meta
----
-Which is the apple logo?
-- [ ] ![placeholder](/mircosoft_logo.png)
-- [x] ![placeholder](/apple_logo.png)
-- [ ] ![placeholder](/meta_logo.png)
-- [ ] ![placeholder](/google_logo.png)
-@end
-```
+### Installation & Setup
+
+1.  **Install the plugin**
+
+    Install the `mkdocs-quiz-plugin` package from TestPyPI using pip:
+    ```bash
+    pip install -i https://test.pypi.org/simple/ mkdocs-quiz-plugin
+    ```
+
+2.  **Enable the plugin**
+
+    Add the plugin to your `mkdocs.yml` file. This enables the plugin for your project:
+    ```yaml
+    plugins:
+      - quiz
+    ```
+
+3.  **Start writing quizzes**
+
+    You can now start adding quiz blocks to your Markdown files.
+
+4.  **Preview your site**
+
+    Use the `mkdocs serve` command to start the live-reloading server and see your quizzes rendered in real-time:
+    ```bash
+    mkdocs serve
+    ```
+
+## Configuration
+
 
 ### Key words defining Quiz Behaviour
 
-`@START` / `@END`
-:   Marks the beginning and end of the interactive quiz block.
-:   Signals the parser to switch from standard Markdown to Quiz mode.
+The following keywords can be used to control the behavior of the quiz.
 
-`@id: <unique_name>`
-:   Assigns a unique identifier to a quiz instance.
-:   Essential for referencing specific quizzes in complex files.
-
-`@include: <file_path>, <quiz_id>`
-:   Imports a specific quiz from an external file.
-:   Allows for reusability and cleaner course pages.
-
-`@title: <text>` & `@description: <text>`
-:   Sets the main header and introductory instructions.
-
-`@layout: <list|book>`
-:   List: All questions visible vertically.
-:   Book: One question per slide.
-
-`@time_limit: <minutes>`
-:   Sets the countdown timer in minutes.
-
-`@time_limit_seconds: <seconds>`
-:   Alternative for shorter quizzes (overrides minutes).
-
-`@shuffle_questions: <true|false>`
-:   Randomizes question order to prevent memorization.
-
-`@shuffle_answers: <true|false>`
-:   Randomizes answer options (A, B, C, D).
-
-`@feedback_mode: <immediate|end>`
-:   Immediate: Shows results after every question.
-:   End: Results revealed only upon final submission.
-
-`@allow_skip: <true|false>`
-:   Determines if questions can be left unanswered.
-
-`@enable_survey: <true|false>`
-:   Toggles a mini-feedback form for students after the quiz.
-
-`@explanation: <text>`
-:   Provides context for the correct answer during feedback.
-:   Explains why an answer is right or wrong.
-
-`@reference: <anchor_id>`
-:   Creates a 'Go to definition' link.
-:   Jumps student directly to the relevant explanation in lecture notes.
+| Keyword                 | Description                                                                                             | Default / Behavior                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `@START` / `@END`       | Marks the beginning and end of the interactive quiz block.                                              | N/A                                               |
+| `@id: <unique_name>`      | Assigns a unique identifier to a quiz instance, essential for referencing specific quizzes.             | N/A                                               |
+| `@include: <file_path>` | Imports a specific quiz from an external file for reusability.                                          | N/A                                               |
+| `@title: <text>`        | Sets the main header for the quiz.                                                                      | Hidden if not provided.                           |
+| `@description: <text>`  | Sets the introductory instructions for the quiz.                                                        | Hidden if not provided.                           |
+| `@layout: <list/book>`  | Defines the quiz layout. `list` shows all questions vertically, `book` shows one question per slide.      | `book`                                            |
+| `@feedback_mode: <end/immediate>` | `immediate` shows results after each question, `end` reveals results only upon final submission. | `end`                                             |
+| `@shuffle_questions: <true/false>` | Randomizes the order of questions to prevent memorization.                                   | `false`                                           |
+| `@shuffle_answers: <true/false>` | Randomizes the order of answer options.                                                         | `true`                                            |
+| `@time_limit: <minutes>` | Sets a countdown timer in minutes.                                                                      | Hidden if not provided.                           |
+| `@time_limit_seconds: <seconds>` | Alternative to `time_limit` for shorter quizzes, specified in seconds.                          | Hidden if not provided.                           |
+| `@allow_back: <true/false>` | Allows the user to go back to previous questions.                                                     | `true`                                            |
+| `@allow_skip: <true/false>` | Determines if questions can be left unanswered.                                                       | `true`                                            |
+| `@enable_survey: <true/false>` | Toggles a mini-feedback form for students after the quiz.                                         | `false`                                           |
+| `@explanation: <text>`  | Provides context for the correct answer during feedback.                                                | N/A                                               |
+| `@reference: <anchor_id>` | Creates a 'Go to definition' link to jump to relevant lecture notes.                                    | N/A                                               |
 
 ### Referencing and Explanations
 
@@ -138,7 +102,7 @@ In the lecture material (markdown file):
 Random text. %reference_label% The explanation starts with this sentence. And the text here goes on.
 ```
 
-## Features
+## Quiz Types
 
 The quiz supports several types of questions:
 
@@ -148,10 +112,6 @@ The quiz supports several types of questions:
 *   **Ordering:** The user must arrange items in the correct order.
 *   **Matching:** The user must match items from two lists.
 *   **Picture Questions:** Questions that include images.
-
-## Customization
-
-The quiz plugin can be customized through various data attributes on the main quiz container. For example, you can set a timer, change the layout, and define the feedback mode.
 
 ## FAQ
 
