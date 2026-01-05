@@ -102,7 +102,9 @@ In the lecture material (markdown file):
 Random text. %reference_label% The explanation starts with this sentence. And the text here goes on.
 ```
 
-## Quiz Types
+## Features
+
+### Quiz Types
 
 The quiz supports several types of questions:
 

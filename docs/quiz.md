@@ -7,6 +7,7 @@ What is 2 + 2?
 [] 3
 [x] 4
 [] 5
+@explanation: The operation is addition. To see the details click [here](#math-anchor)
 ---
 Which of the following countries are officially located on the continent of South America?
 [] Costa Rica
@@ -14,6 +15,8 @@ Which of the following countries are officially located on the continent of Sout
 [] Mexico
 [x] Uruguay
 [x] Suriname
+
+@explanation: Explanation for a HEADING. Click [here](#random-heading) to understand it.
 ---
 The octopus has {{3|1|4|8}} hearts
 ---

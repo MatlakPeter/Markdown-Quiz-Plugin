@@ -1,4 +1,4 @@
-html, body {
+/* html, body {
     background-color: #9b9ea3; 
     font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: 20px;
@@ -6,7 +6,7 @@ html, body {
     padding: 0;
     width: 100%;
     overflow-x: hidden; /* prevent horizontal scroll */
-}
+} */
 
 /* Card */
 .quiz-start-screen {

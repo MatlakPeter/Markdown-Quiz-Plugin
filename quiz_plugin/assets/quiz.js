@@ -511,7 +511,9 @@ function reportQuestion(questionElement, index) {
 
     const formatList = (btns) => btns.map(b => b.innerHTML).join(', ') || '<em>None</em>';
 
-    return createReportCard(index, questionText, isCorrect, formatList(userSelected), formatList(correctAnswers));
+    const explanationHTML = extractExplanationHTML(questionElement);
+
+    return createReportCard(index, questionText, isCorrect, formatList(userSelected), formatList(correctAnswers), explanationHTML);
 }
 
 function reportDropdown(questionBlock, index) {
@@ -548,7 +550,9 @@ function reportDropdown(questionBlock, index) {
         dropdownInClone.parentNode.replaceChild(placeholder, dropdownInClone);
     }
 
-    return createReportCard(index, questionClone.innerHTML, isCorrect, userAnswerDisplay, correctAnswerDisplay);
+    const explanationHTML = extractExplanationHTML(questionBlock);
+
+    return createReportCard(index, questionClone.innerHTML, isCorrect, userAnswerDisplay, correctAnswerDisplay, explanationHTML);
 }
 
 function reportOrdering(questionElement, index) {
@@ -564,7 +568,9 @@ function reportOrdering(questionElement, index) {
         .map(i => i.innerText)
         .join(", ");
 
-    return createReportCard(index, questionText, isCorrect, userOrder, correctOrder);
+    const explanationHTML = extractExplanationHTML(questionElement);
+
+    return createReportCard(index, questionText, isCorrect, userOrder, correctOrder, explanationHTML);
 }
 
 // ---------- reporting for matching ----------
@@ -607,17 +613,95 @@ function reportMatching(questionBlock, index) {
         userPairs.length === correctPairs.length &&
         userPairs.every(up => up.left === up.right);
 
+    const explanationHTML = extractExplanationHTML(questionBlock);
+
     return createReportCard(
         index,
         questionText,
         isCorrect,
         userPairs.map(p => p.label).join(", ") || "<em>None</em>",
-        correctPairs.map(p => p.label).join(", ")
+        correctPairs.map(p => p.label).join(", "),
+        explanationHTML
     );
 }
 
-// Reusable HTML generator for reports
-function createReportCard(index, questionText, isCorrect, userAns, correctAns) {
+// EXTRACT AND RENDER EXPLANATION FROM QUESTION BLOCK ---
+/**
+ * Extracts explanation content from a question block and returns rendered HTML.
+ * The explanation is stored in a hidden div with a data-explanation-markdown attribute.
+ * This function retrieves the markdown content and renders it as HTML with proper formatting.
+ * 
+ * @param {HTMLElement} questionElement - The question block element
+ * @returns {string} - HTML string containing the formatted explanation, or empty string if none exists
+ */
+function extractExplanationHTML(questionElement) {
+    const explanationDiv = questionElement.querySelector('.quiz-explanation');
+    
+    if (!explanationDiv) {
+        return '';
+    }
+    
+    // Get the markdown content from the data attribute
+    const markdownContent = explanationDiv.getAttribute('data-explanation-markdown');
+    
+    if (!markdownContent) {
+        return '';
+    }
+    
+    // Decode HTML entities
+    const decodedContent = decodeHTMLEntities(markdownContent);
+    
+    // Render markdown to HTML (preserve links, formatting, etc.)
+    const renderedHTML = renderMarkdownToHTML(decodedContent);
+    
+    return `
+        <div style="margin-top: 15px; padding: 12px; background-color: #e8f4f8; border-left: 4px solid #2196F3; border-radius: 4px;">
+            <strong style="color: #1976D2;">Explanation:</strong>
+            <div style="margin-top: 8px; color: #333;">
+                ${renderedHTML}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Decodes HTML entities in a string.
+ * Used to decode explanation content stored in data attributes.
+ * 
+ * @param {string} text - The text with HTML entities
+ * @returns {string} - The decoded text
+ */
+function decodeHTMLEntities(text) {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = text;
+    return textarea.value;
+}
+
+/**
+ * Renders simple markdown to HTML.
+ * Supports:
+ * - Inline links: [text](url)
+ * - Basic formatting (preserved as-is since it's already in HTML context)
+ * 
+ * This is a lightweight markdown renderer that preserves standard markdown links
+ * and converts them to clickable HTML anchors.
+ * 
+ * @param {string} markdown - The markdown text
+ * @returns {string} - The rendered HTML
+ */
+function renderMarkdownToHTML(markdown) {
+    // Convert markdown links [text](url) to HTML <a> tags
+    // This regex matches standard markdown link syntax
+    let html = markdown.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+        // Preserve the link exactly as written
+        return `<a href="${url}" style="color: #1976D2; text-decoration: underline;">${text}</a>`;
+    });
+    
+    return html;
+}
+
+// Reusable HTML generator for reports (MODIFIED TO ACCEPT EXPLANATION)
+function createReportCard(index, questionText, isCorrect, userAns, correctAns, explanationHTML = '') {
     const statusIcon = isCorrect ? '✅' : '❌';
     const borderColor = isCorrect ? 'green' : 'red';
     const userColor = isCorrect ? 'green' : 'red';
@@ -637,6 +721,7 @@ function createReportCard(index, questionText, isCorrect, userAns, correctAns) {
                     <span style="color: green">${correctAns}</span>
                 </div>
             </div>
+            ${explanationHTML}
         </div>
     `;
     return { html, isCorrect };
