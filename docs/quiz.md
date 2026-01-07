@@ -2,6 +2,9 @@
 @author: project system development
 @id: easy
 @shuffle_questions: true
+@feedback_mode: immediate
+@layout: list
+@time_limit: 10
 ---
 What is 2 + 2?
 [] 3

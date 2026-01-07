@@ -2,6 +2,7 @@ import os
 import shutil
 import re
 import logging
+import html
 from mkdocs.plugins import BasePlugin
 from mkdocs.config import config_options
 
@@ -44,20 +45,24 @@ class QuizPlugin(BasePlugin):
         else:
             log.warning("[QuizPlugin] 'assets' directory not found. CSS/JS might be missing.")
 
-    # --- REGEX DEFINITIONS ---
+# --- REGEX DEFINITIONS ---
+    # 1. Main Container & Inclusion Rules
     INCLUDE_REGEX = re.compile(r'^\s*@include:\s*(.+)$', flags=re.MULTILINE)
     QUIZ_BLOCK_REGEX = re.compile(r'@START(.*?)@END', flags=re.DOTALL)
+    
+    # 2. Global Metadata & Structural Rules
+    QUIZ_META_LINE_REGEX = re.compile(r'^\s*@(\w+)\s*:\s*(.+)$', re.MULTILINE)
+    QUIZ_ID_REGEX = re.compile(r'@id:\s*(.+)', flags=re.IGNORECASE)
     QUESTION_SPLIT_REGEX = re.compile(r'(?:^|\n)\s*---\s*(?:\n|$)')
+    
+    # 3. Specific Question Syntax (Dropdown, Ordering, Matching, Images)
     ANSWER_REGEX = re.compile(r'^\s*\[(x|\s)?\]\s*(.*)', flags=re.MULTILINE)
     DROPDOWN_REGEX = re.compile(r'\{\{(.+?)\}\}')
     ORDER_ITEM_REGEX = re.compile(r'^\s*\((\d+)\.\)\s*(.*)$', flags=re.MULTILINE | re.UNICODE)
-    IMAGE_REGEX = re.compile(r'!\[(.*?)\]\((.*?)\)')
-    QUIZ_ID_REGEX = re.compile(r'@id:\s*(.+)', flags= re.IGNORECASE)
     MATCHING_REGEX = re.compile(r'^\s*\{(.+?)\|(.+?)\}', flags=re.MULTILINE)
-    # REGEX FOR DATA PROCESSING 
-    QUIZ_BLOCK_REGEX = re.compile(r'@START(.*?)@END', flags=re.DOTALL)
-    QUIZ_META_LINE_REGEX = re.compile(r'^\s*@(\w+)\s*:\s*(.+)$', re.MULTILINE)
-    #REGEX FOR EXPLANATION DIRECTIVE ---
+    IMAGE_REGEX = re.compile(r'!\[(.*?)\]\((.*?)\)')
+
+    # 4. Explanations
     EXPLANATION_REGEX = re.compile(r'^\s*@explanation:\s*(.*)$', flags=re.MULTILINE | re.IGNORECASE)
 
     def _extract_quiz_meta(self, block_content):
@@ -83,6 +88,7 @@ class QuizPlugin(BasePlugin):
 
         cleaned = self.QUIZ_META_LINE_REGEX.sub(replace_meta, block_content)
         return meta, cleaned
+
 
     def _render_start_screen(self, meta):
         if not meta:
@@ -111,7 +117,7 @@ class QuizPlugin(BasePlugin):
             meta_items.append(f'<span class="quiz-meta-item"> Author: {meta["author"]}</span>')
         if "time_limit" in meta:
             minutes = int(int(meta["time_limit"]))
-            meta_items.append(f'<span class="quiz-meta-item"> Time: {minutes} Min</span>')
+            meta_items.append(f'<span class="quiz-meta-item"> Time: {minutes} seconds</span>')
 
         if meta_items:
             parts.append(f'''
@@ -214,9 +220,11 @@ class QuizPlugin(BasePlugin):
             
             # 3. Define Container Attributes
             # Ensure the 'id' meta is extracted (it's in quiz_meta due to _extract_quiz_meta)
+            layout_mode = self._normalize_choice(quiz_meta.get("layout"), allowed={"book", "list"}, default="book")
+            
             container_attrs = {
                 "id": quiz_meta.get("id"),
-                "layout": self._normalize_choice(quiz_meta.get("layout"), allowed={"book", "list"}, default="book"),
+                "layout": layout_mode,
                 "timer": quiz_meta.get("time_limit"),
                 "shuffle-questions": self._normalize_choice(quiz_meta.get("shuffle_questions"), allowed={"true", "false"}, default="false"),
                 "shuffle-answers": self._normalize_choice(quiz_meta.get("shuffle_answers"), allowed={"true", "false"}, default="true"),
@@ -233,7 +241,7 @@ class QuizPlugin(BasePlugin):
             # 4. Assemble HTML Output
             html_output = []
             
-            # Open the main quiz container (CRITICAL: Contains all quiz content)
+            # Open the main quiz container
             html_output.append(f'<div class="quiz-container" markdown="1" {data_attrs}>')
             
             # Add the Start Screen
@@ -261,29 +269,26 @@ class QuizPlugin(BasePlugin):
             
             # Add Questions
             for index, q_text in enumerate(questions):
-                q_html = self._render_single_question(q_text, index)
+                q_html = self._render_single_question(q_text, index, layout=layout_mode)
                 html_output.append(q_html)
 
             # Add Navigation/Footer
             html_output.append(f'''
-            <div class="quiz-navigation">
-                <button class="quiz-nav-previous" style="display: none;">Previous</button>  
-                <span class="quiz-status-text"></span>
-                <button class="quiz-nav-next">Next</button>
-                <button class="quiz-nav-submit" style="display: none;">Submit</button>
-            </div>
-            ''')
+                <div class="quiz-navigation">
+                    <button class="quiz-nav-previous" style="display: none;">Previous</button>  
+                    <span class="quiz-status-text"></span>
+                    <button class="quiz-nav-next">Next</button>
+                    <button class="quiz-nav-submit">Submit</button>  </div>
+                ''')
             
             # Add Results Div
             html_output.append('<div class="quiz-results"></div>')
 
-            # --- CRITICAL CLOSING FIX ---
             # Close the quiz-main-wrapper
             html_output.append('</div>') 
             
             # Close the quiz-container (PREVENTS CONTENT LEAKAGE)
             html_output.append('</div>') 
-            # --- END CRITICAL CLOSING FIX ---
 
             return "\n".join(html_output)
 
@@ -307,20 +312,20 @@ class QuizPlugin(BasePlugin):
         
         return question_text, None
 
-    def _render_single_question(self, text, index):
+    def _render_single_question(self, text, index, layout='book'):
         text, explanation = self._extract_explanation(text)
-        
+
+        def replace_image(match):
+            safe_alt = html.escape(match.group(1)) 
+            src_url = match.group(2) 
+            return f'<br><img src="{src_url}" alt="{safe_alt}" class="quiz-image">'
+
         lines = text.strip().split('\n')
         question_text_parts = []
         answers_html = []
         order_items = []
         match_pairs = []
         correct_answer_count = 0
-        
-        def replace_image(match):
-            alt_text = match.group(1)
-            src_url = match.group(2)
-            return f'<br><img src="{src_url}" alt="{alt_text}" class="quiz-image">'
         
         # --- PARSING PHASE ---
         for line in lines:
@@ -331,8 +336,8 @@ class QuizPlugin(BasePlugin):
             # Check for Matching {A|B}
             matching_match = self.MATCHING_REGEX.match(normalized_line)
             if matching_match:
-                left_text = matching_match.group(1).strip()
-                right_text = matching_match.group(2).strip()
+                left_text = html.escape(matching_match.group(1).strip())
+                right_text = html.escape(matching_match.group(2).strip())
                 pair_id = f"{len(match_pairs)}"
                 match_pairs.append((left_text, right_text, pair_id))
                 continue
@@ -341,37 +346,50 @@ class QuizPlugin(BasePlugin):
             order_match = self.ORDER_ITEM_REGEX.match(normalized_line)
             if order_match:
                 item_number = int(order_match.group(1))
-                item_text = order_match.group(2).strip()
-                if self.IMAGE_REGEX.search(item_text):
-                   item_text = self.IMAGE_REGEX.sub(replace_image, item_text)
+                item_raw_text = order_match.group(2).strip()
                 
-                order_items.append((item_number, item_text))
+                # 1. Escape the text for security
+                item_html = html.escape(item_raw_text)
+                # 2. Re-insert images safely
+                if self.IMAGE_REGEX.search(item_raw_text):
+                    for m in self.IMAGE_REGEX.finditer(item_raw_text):
+                        safe_alt = html.escape(m.group(1))
+                        img_tag = f'<br><img src="{m.group(2)}" alt="{safe_alt}" class="quiz-image">'
+                        item_html = item_html.replace(html.escape(m.group(0)), img_tag)
+                
+                order_items.append((item_number, item_html))
                 continue
 
             # Check for Standard Answers: [x] Correct or [ ] Incorrect
             ans_match = self.ANSWER_REGEX.match(line)
             if ans_match:
-                is_correct_marker = ans_match.group(1) == 'x'
-                if is_correct_marker:
-                    correct_answer_count += 1
+                is_correct_str = "true" if ans_match.group(1) == 'x' else "false"
+                if is_correct_str == "true": correct_answer_count += 1
                 
-                is_correct_str = "true" if is_correct_marker else "false"
-                ans_text = ans_match.group(2)
+                ans_raw_text = ans_match.group(2).strip()
+                # 1. Escape for security
+                ans_html_text = html.escape(ans_raw_text)
+                # 2. Re-insert images safely
+                if self.IMAGE_REGEX.search(ans_raw_text):
+                    for m in self.IMAGE_REGEX.finditer(ans_raw_text):
+                        safe_alt = html.escape(m.group(1))
+                        img_tag = f'<br><img src="{m.group(2)}" alt="{safe_alt}" class="quiz-image">'
+                        ans_html_text = ans_html_text.replace(html.escape(m.group(0)), img_tag)
                 
-                if self.IMAGE_REGEX.search(ans_text):
-                    ans_text = self.IMAGE_REGEX.sub(replace_image, ans_text)
-                    
-                answers_html.append(
-                    f'<button class="quiz-answer" data-correct="{is_correct_str}">{ans_text}</button>'
-                )
+                answers_html.append(f'<button class="quiz-answer" data-correct="{is_correct_str}">{ans_html_text}</button>')
             else:
-                # Regular text line (question body)
                 question_text_parts.append(line)
 
         # question
-        full_question_text = " ".join(question_text_parts)
-        if self.IMAGE_REGEX.search(full_question_text):
-            full_question_text = self.IMAGE_REGEX.sub(replace_image, full_question_text)
+        raw_question_body = " ".join(question_text_parts)
+        full_question_text = html.escape(raw_question_body)
+        
+        # Safely re-insert images into the escaped question body
+        if self.IMAGE_REGEX.search(raw_question_body):
+            for m in self.IMAGE_REGEX.finditer(raw_question_body):
+                safe_alt = html.escape(m.group(1))
+                img_tag = f'<br><img src="{m.group(2)}" alt="{safe_alt}" class="quiz-image">'
+                full_question_text = full_question_text.replace(html.escape(m.group(0)), img_tag)
         
         # --- DROPDOWN PROCESSING ---
         # Only process dropdowns if we aren't doing an ordering question
@@ -381,20 +399,14 @@ class QuizPlugin(BasePlugin):
                 content = match.group(1)
                 raw_options = content.split('|')
                 
-                processed_options = []
-                for i, opt in enumerate(raw_options):
-                    opt = opt.strip()
-                    is_correct = "true" if i == 0 else "false"
-                    processed_options.append({"text": opt, "is_correct": is_correct})
-                
-                
-                
                 select_html = ['<select class="quiz-dropdown">']
-                select_html.append('<option disabled>Choose...</option>')
-                for item in processed_options:
-                    select_html.append(
-                        f'<option data-correct="{item["is_correct"]}">{item["text"]}</option>'
-                    )
+                select_html.append('<option disabled selected>Choose...</option>')
+                
+                for i, opt in enumerate(raw_options):
+                    safe_text = html.escape(opt.strip())
+                    is_correct = "true" if i == 0 else "false"
+                    select_html.append(f'<option data-correct="{is_correct}">{safe_text}</option>')
+                    
                 select_html.append('</select>')
                 return "".join(select_html)
 
@@ -414,8 +426,12 @@ class QuizPlugin(BasePlugin):
             '''
 
         # --- HTML GENERATION ---
+
+        if layout == 'list':
+            display_style = ''
+        else:
+            display_style = ' style="display: none;"' if index > 0 else ''
         
-        display_style = ' style="display: none;"' if index > 0 else ''
         # Matching Question
         if match_pairs:
             left_items = []
@@ -437,6 +453,7 @@ class QuizPlugin(BasePlugin):
                         {"".join(right_items)}
                     </div>
                 </div>
+                <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
                 {explanation_html}
             </div>
             '''
@@ -459,6 +476,7 @@ class QuizPlugin(BasePlugin):
                 <div class="quiz-ordering-list">
                     {"".join(list_items_html)}
                 </div>
+                <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
                 {explanation_html}
             </div>
             '''
@@ -468,6 +486,7 @@ class QuizPlugin(BasePlugin):
             return f'''
             <div class="quiz-question-block" data-question-index="{index}" data-type="dropdown"{display_style}>
                 <p class="quiz-question">{full_question_text}</p>
+                <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
                 {explanation_html}
             </div>
             '''
@@ -485,10 +504,10 @@ class QuizPlugin(BasePlugin):
         <div class="quiz-question-block" data-question-index="{index}"{data_type_attr}{display_style}>
             <p class="quiz-question">{full_question_text}</p>
             {answers_block}
-            {explanation_html}
+            <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
+            {explanation_html}        
         </div>
         '''
-
     def _escape_html_attr(self, text):
         """Escape text for safe inclusion in HTML attribute values."""
         return (text
