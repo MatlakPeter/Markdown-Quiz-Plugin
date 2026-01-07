@@ -4,12 +4,14 @@
  * =============================================================================
  */
 document.addEventListener("DOMContentLoaded", () => {
+    // Find all quiz containers on the page and initialize them individually
     document.querySelectorAll('.quiz-container').forEach(initializeQuiz);
 });
 
 /**
  * =============================================================================
  * SECTION 2: QUIZ INSTANCE LOGIC
+ * Encapsulates the state and behavior for a single quiz on the page.
  * =============================================================================
  */
 function initializeQuiz(container) {
@@ -20,13 +22,10 @@ function initializeQuiz(container) {
     const submitBtn = container.querySelector('.quiz-nav-submit');
     const statusText = container.querySelector(".quiz-status-text");
     const progressBar = container.querySelector(".quiz-progress-bar");
-    const progressBarContainer = container.querySelector(".quiz-progress-container"); // Needed for List Mode
     const resultsDiv = container.querySelector(".quiz-results");
     const navContainer = container.querySelector(".quiz-navigation");
 
-    // Layout & Feedback Detection
-    const layout = container.getAttribute("data-layout") || "book";
-    const feedbackType = container.getAttribute("data-feedback-mode");
+    const retakeBtn = container.querySelector(".quiz-btn-retake");
 
     // Timer specific elements
     const startScreen = container.querySelector(".quiz-start-screen");
@@ -41,34 +40,61 @@ function initializeQuiz(container) {
     let timerInterval = null;
     let startTime = null;
 
-    // Quiz State
+    // 2. Quiz State
     let currentIndex = 0;
 
-    let questionOrder = [];
+    // --- NEW RANDOMIZATION STATE ---
+    let questionOrder = []; // Stores the physical order of question indices [2, 0, 3, 1]
     const shouldShuffle = container.getAttribute("data-shuffle-questions") === "true";
+    // --- END NEW RANDOMIZATION STATE ---
 
     // =========================================================
-    // INTERNAL HELPER FUNCTIONS
+    // SECTION: INTERNAL HELPER FUNCTIONS
     // =========================================================
+
+
+    // If the RETAKE BUTTON exists and is inside the results div, move it out 
+    // so it doesn't get deleted when we print the score.
+    if (resultsDiv && retakeBtn && resultsDiv.contains(retakeBtn)) {
+        const buttonWrapper = document.createElement("div");
+        buttonWrapper.className = "quiz-retake-wrapper";
+        buttonWrapper.style.textAlign = "center";
+        buttonWrapper.style.marginTop = "20px";
+        
+        // Insert the wrapper AFTER the results div
+        resultsDiv.parentNode.insertBefore(buttonWrapper, resultsDiv.nextSibling);
+        
+        // Move the button into the wrapper
+        buttonWrapper.appendChild(retakeBtn);
+    }
+
+
 
     function setupTimerDisplay() {
         if (timeLeft === null || timeLeft <= 0) {
-            if (timerDisplayContainer) timerDisplayContainer.style.display = 'none';
+            if (timerDisplayContainer) {
+                timerDisplayContainer.style.display = 'none';
+            }
         } else {
             timeDisplaySpan.textContent = formatTime(timeLeft);
-            if (timerDisplayContainer) timerDisplayContainer.style.display = 'block';
+            if (timerDisplayContainer) {
+                timerDisplayContainer.style.display = 'block';
+            }
         }
     }
 
     function startTimer() {
         if (timeLeft === null || timeLeft <= 0) return;
+
         startTime = Date.now();
+
         timerInterval = setInterval(() => {
             timeLeft--;
             timeDisplaySpan.textContent = formatTime(timeLeft);
+
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
-                handleQuizSubmit(true);
+                handleQuizSubmit(true); // Auto-submit on time expired
             }
         }, 1000);
     }
@@ -80,156 +106,238 @@ function initializeQuiz(container) {
         }
     }
 
+    // --- Core Quiz Flow Functions ---
+
     function handleQuizStart() {
         if (startScreen) startScreen.style.display = 'none';
         if (mainWrapper) mainWrapper.style.display = 'block';
+
+        // Ensure the display is updated after the wrapper is visible
         updateDisplay();
         startTimer();
     }
 
     function changeQuestion(delta) {
-        if (layout === "list") return; // Disable paging in list mode
+        // Find the actual question index in the DOM to hide it
         const currentActualIndex = questionOrder[currentIndex];
         questions[currentActualIndex].style.display = "none";
+
         currentIndex += delta;
         updateDisplay();
     }
 
     function updateDisplay() {
-        if (layout === "list") {
-            // --- LIST MODE LOGIC ---
-            questionOrder.forEach((actualIndex) => {
-                const q = questions[actualIndex];
-                q.style.display = "block"; // Show all
+        // --- MODIFIED: Use questionOrder to get the correct physical question ---
+        const actualIndex = questionOrder[currentIndex];
+        const currentQuestion = questions[actualIndex];
 
-                // Visual separation for List Mode
-                q.style.borderBottom = "1px solid #ddd";
-                q.style.paddingBottom = "20px";
-                q.style.marginBottom = "20px";
-
-                if (q.dataset.type === "ordering" && !q.dataset.initialized) {
-                    initOrdering(q);
-                    q.dataset.initialized = "true";
-                }
-
-                // Show Check Answer buttons if immediate
-                const checkBtn = q.querySelector(".quiz-btn-check-answer");
-                if (checkBtn) {
-                    checkBtn.style.display = (feedbackType === "immediate") ? "block" : "none";
-                }
-            });
-
-            // Hide paging elements
-            if (statusText) statusText.style.display = "none";
-            if (progressBarContainer) progressBarContainer.style.display = "none";
-
-            if (navContainer) {
-                navContainer.style.display = "block";
-                navContainer.style.textAlign = "center";
-            }
-
-            if (nextBtn) nextBtn.style.display = "none";
-            if (prevBtn) prevBtn.style.display = "none";
-
-            if (submitBtn) {
-                submitBtn.style.display = "block";
-                submitBtn.style.margin = "40px auto";
-                submitBtn.textContent = "Finish and See Full Report";
-            }
+        // Lazy init for ordering questions (SortableJS)
+        if (currentQuestion.dataset.type === "ordering" && !currentQuestion.dataset.initialized) {
+            initOrdering(currentQuestion);
+            currentQuestion.dataset.initialized = "true";
         }
-        else {
-            // --- BOOK MODE LOGIC ---
-            const actualIndex = questionOrder[currentIndex];
-            const currentQuestion = questions[actualIndex];
 
-            if (currentQuestion.dataset.type === "ordering" && !currentQuestion.dataset.initialized) {
-                initOrdering(currentQuestion);
-                currentQuestion.dataset.initialized = "true";
-            }
+        // Hide all questions, then show only the current one based on the shuffled order
+        questions.forEach((q, idx) => {
+            q.style.display = (idx === actualIndex) ? "block" : "none";
+        });
 
-            questions.forEach((q, idx) => {
-                q.style.display = (idx === actualIndex) ? "block" : "none";
-            });
+        // Update UI Text & Progress
+        statusText.textContent = `Question ${currentIndex + 1}/${questions.length}`;
+        const progressPercent = ((currentIndex) / questions.length) * 100;
+        progressBar.style.width = `${progressPercent}%`;
 
-            // Check Answer button for current page
-            const checkBtn = currentQuestion.querySelector(".quiz-btn-check-answer");
-            if (checkBtn) {
-                checkBtn.style.display = (feedbackType === "immediate") ? "block" : "none";
-            }
+        // Update Buttons visibility (no change, uses logical currentIndex)
+        prevBtn.style.display = currentIndex === 0 ? "none" : "inline-block";
 
-            // Update Progress
-            if (statusText) {
-                statusText.style.display = "block";
-                statusText.textContent = `Question ${currentIndex + 1}/${questions.length}`;
-            }
-
-            if (progressBar && questions.length > 0) {
-                const progressPercent = (currentIndex / questions.length) * 100;
-                progressBar.style.width = `${progressPercent}%`;
-            }
-
-            prevBtn.style.display = currentIndex === 0 ? "none" : "inline-block";
-            const isLast = currentIndex === questions.length - 1;
-            nextBtn.style.display = isLast ? "none" : "inline-block";
-            submitBtn.style.display = isLast ? "inline-block" : "none";
-        }
+        const isLast = currentIndex === questions.length - 1;
+        nextBtn.style.display = isLast ? "none" : "inline-block";
+        submitBtn.style.display = isLast ? "inline-block" : "none";
     }
+
 
     function handleQuizSubmit(timeExpired = false) {
         stopTimer();
 
-        if (progressBar) {
-            progressBar.style.width = "100%";
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerText = timeExpired ? "Time Expired" : "Submitted";
         }
 
-        if (mainWrapper) {
-            const allQuestions = mainWrapper.querySelectorAll(".quiz-question-block");
-            allQuestions.forEach(q => q.style.display = "none");
+        if (retakeBtn) retakeBtn.style.display = "inline-block";
 
-            if (navContainer) navContainer.style.display = "none";
-            if (timerDisplayContainer) timerDisplayContainer.style.display = "none";
+        // Hide the active question (using the actual physical index)
+        if (currentIndex >= 0 && currentIndex < questions.length) {
+            const currentActualIndex = questionOrder[currentIndex];
+            questions[currentActualIndex].style.display = "none";
         }
+        
+        if (navContainer) navContainer.style.display = "none";
+        if (progressBar) progressBar.style.width = "100%";
 
-        let timeTaken = null;
+        let timeTaken = null; 
         if (startTime !== null) {
             const endTime = Date.now();
-            timeTaken = Math.floor((endTime - startTime) / 1000);
+            const elapsed = Math.floor((endTime - startTime) / 1000);
+            timeTaken = elapsed; // Time taken in seconds
         }
 
-        const reportHTML = generateReport(container, timeTaken, questionOrder);
-
+        // Pass timeTaken (which will be null if no timer was started)
+        const reportHTML = generateReport(container, timeTaken, questionOrder); 
+        
         if (resultsDiv) {
             resultsDiv.innerHTML = reportHTML;
-            resultsDiv.style.display = 'block'; // Force visibility
-            resultsDiv.scrollIntoView({ behavior: 'smooth' }); // Smooth scroll to the score
-            container.classList.add("quiz-results-shown");
+            resultsDiv.style.display = 'block';
         }
     }
 
-    // --- EXECUTION ---
 
-    // 1. Setup individual questions
-    questions.forEach((q) => setupQuestion(q, feedbackType));
+    function resetQuiz() {
+    // 1. Reset State Variables
+    currentIndex = 0;
+    timeLeft = isNaN(timeLimitSeconds) ? null : timeLimitSeconds;
+    
+    // 2. DOM Cleanup: Questions and Answers
+    questions.forEach(q => {
+        // Remove feedback messages and explanations
+        const feedback = q.querySelector('.quiz-feedback-msg');
+        if (feedback) feedback.remove();
+        
+        const explanation = q.querySelector('.quiz-explanation');
+        if (explanation) explanation.style.display = 'none';
 
-    // 2. Handle Shuffle
+        // Reset Standard Buttons
+        q.querySelectorAll('.quiz-answer').forEach(btn => {
+            btn.disabled = false;
+            btn.classList.remove('selected', 'correct', 'incorrect', 'shouldbecorrect');
+        });
+
+        // Reset Dropdowns
+        const dropdown = q.querySelector('.quiz-dropdown');
+        if (dropdown) {
+            dropdown.disabled = false;
+            dropdown.selectedIndex = 0;
+            dropdown.style.border = "";
+            dropdown.style.backgroundColor = "";
+        }
+
+        // Reset Matching
+        if (q.dataset.type === 'matching') {
+            const solvedArea = q.querySelector('.quiz-match-solved-area');
+            if (solvedArea) solvedArea.innerHTML = '';
+            q.querySelectorAll('.quiz-match-item').forEach(item => {
+                item.classList.remove('used', 'selected');
+                item.style.display = '';
+                item.style.pointerEvents = 'auto';
+            });
+        }
+
+        // Reset Ordering
+        if (q.dataset.type === 'ordering') {
+            q.querySelectorAll('.quiz-order-item').forEach(item => {
+                item.style.border = "";
+                item.style.backgroundColor = "";
+                item.style.pointerEvents = 'auto';
+            });
+        }
+        
+        // Reset Check Answer Buttons
+        const checkBtn = q.querySelector(".quiz-btn-check-answer");
+        if (checkBtn) {
+            checkBtn.disabled = false;
+        }
+    });
+
+    // 3. UI Toggle
+    if (resultsDiv) {
+        resultsDiv.style.display = 'none';
+        resultsDiv.innerHTML = '';
+    }
+    if (retakeBtn) {
+        retakeBtn.style.display = 'none';
+    }
+
+    // Restore Navigation & Submit Button ---
+        if (navContainer) {
+            navContainer.style.display = "flex"; // Restores the container hidden by handleQuizSubmit
+        }
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Submit"; // Reset text from "Submitted" or "Time Expired"
+            submitBtn.style.display = "none"; // Hide initially (updateDisplay will show it if needed)
+        }
+    
+    // 4. Return to Start or First Question
+    if (startScreen) {
+        startScreen.style.display = 'block';
+        mainWrapper.style.display = 'none';
+    } else {
+        updateDisplay();
+    }
+    
+    // 5. Reset Progress Bar
+    if (progressBar) progressBar.style.width = "0%";
+    
+   // 6. Optional: Reshuffle if configured
     if (shouldShuffle) {
         questionOrder = shuffleQuestionOrder(container, questions);
+        // If we reshuffle, we must call updateDisplay again to show the new Q1
+        if (!startScreen) updateDisplay();
+    }
+
+    }
+
+    // =========================================================
+    // END OF INTERNAL HELPER FUNCTIONS
+    // =========================================================
+
+
+    // 3. Setup Questions (Shuffle answers, init dropdowns)
+    questions.forEach(setupQuestion);
+
+    // --- NEW RANDOMIZATION EXECUTION ---
+    if (shouldShuffle) {
+        // Calls the new global utility function
+        questionOrder = shuffleQuestionOrder(container, questions);
     } else {
+        // Keep original order: [0, 1, 2, 3, ...]
         questionOrder = Array.from({ length: questions.length }, (_, i) => i);
     }
 
-    // 3. Init Display
+    // 4. Start Screen / Initial Display
     setupTimerDisplay();
+
     if (startScreen && startBtn) {
-        startBtn.addEventListener("click", handleQuizStart);
+        if (mainWrapper) mainWrapper.style.display = "none";
+        if (startBtn) startBtn.addEventListener("click", handleQuizStart);
     } else {
         updateDisplay();
     }
 
-    // 4. Bind Nav
-    if (nextBtn) nextBtn.addEventListener("click", () => changeQuestion(1));
-    if (prevBtn) prevBtn.addEventListener("click", () => changeQuestion(-1));
-    if (submitBtn) submitBtn.addEventListener('click', () => handleQuizSubmit(false));
+    // 5. Bind Navigation Events
+    if (nextBtn) {
+        nextBtn.addEventListener("click", () => {
+            if (currentIndex < questions.length - 1) {
+                changeQuestion(1);
+            }
+        });
+    }
+
+    if (prevBtn) {
+        prevBtn.addEventListener("click", () => {
+            if (currentIndex > 0) {
+                changeQuestion(-1);
+            }
+        });
+    }
+
+    if (submitBtn) {
+        submitBtn.addEventListener('click', () => handleQuizSubmit(false));
+    }
+
+    if (retakeBtn) {
+        retakeBtn.addEventListener("click", () => resetQuiz());
+    }
 }
 
 /**
@@ -238,32 +346,12 @@ function initializeQuiz(container) {
  * Functions responsible for preparing questions and handling user selection.
  * =============================================================================
  */
-function setupQuestion(questionBlock, feedbackType) {
-    const questionTextElement = questionBlock.querySelector('.quiz-question');
-
-    if (questionTextElement) {
-        if (questionTextElement.innerHTML.includes('&amp;lt;') ||
-            questionTextElement.innerHTML.includes('&amp;lsqb;')) {
-
-            const decoder = document.createElement('textarea');
-            decoder.innerHTML = questionTextElement.innerHTML;
-            questionTextElement.innerHTML = decoder.value;
-        }
-    }
+function setupQuestion(questionBlock) {
     const answerContainer = questionBlock.querySelector(".quiz-answer-container");
     const dropdown = questionBlock.querySelector(".quiz-dropdown");
     const answerButtons = questionBlock.querySelectorAll(".quiz-answer");
-    const checkButton = questionBlock.querySelector(".quiz-btn-check-answer");
 
-
-    // 1. Handle the Check Answer Button Listener
-    if (checkButton) {
-        checkButton.addEventListener('click', function () {
-            handleCheckButton(this, questionBlock);
-        });
-    }
-
-    // 2. Handle standard buttons (Multiple/Single Choice)
+    // A. Handle standard buttons (Multiple/Single Choice)
     if (answerContainer && answerButtons.length > 0) {
         randomizeAnswers(answerContainer);
 
@@ -278,153 +366,17 @@ function setupQuestion(questionBlock, feedbackType) {
         });
     }
 
-    // 3. Handle Dropdowns
+    // B. Handle Dropdowns
     if (dropdown) {
         setupDropdown(dropdown);
     }
 
-    // 4. Handle Matching
+    // C. Handle Matching - Assumed to be globally defined, now included below
     if (questionBlock.dataset.type === "matching") {
         setupMatching(questionBlock);
     }
 }
 
-function handleCheckButton(btn, questionBlock) {
-    btn.disabled = true;
-    const type = questionBlock.dataset.type;
-    const quizFeedback = questionBlock.querySelector('.quiz-feedback-content')
-    if (quizFeedback)
-        quizFeedback.style.display = "block"
-    let isCorrect = false;
-    let feedbackText = "";
-
-    // single , multiple
-    if (type === "single" || type === "multiple") {
-        const allAnswers = questionBlock.querySelectorAll(".quiz-answer")
-        const userSelected = Array.from(allAnswers).filter(a => a.classList.contains("selected"));
-        const correctAnswers = Array.from(allAnswers).filter(a => a.dataset.correct === 'true');
-
-        isCorrect = (userSelected.length === correctAnswers.length) &&
-            userSelected.every(a => a.dataset.correct === 'true')
-
-        allAnswers.forEach(a => {
-            a.disabled = true
-            if (a.classList.contains('selected')) {
-                a.classList.add(a.dataset.correct === 'true' ? 'correct' : 'incorrect')
-            }
-            else if (a.dataset.correct === 'true') {
-                a.classList.add('shouldbecorrect');
-            }
-        })
-    }
-
-    // dropdown
-    else if (type === 'dropdown') {
-        const dropdown = questionBlock.querySelector('.quiz-dropdown')
-        dropdown.disabled = true
-        let selectedOption, correctAnswerDisplay;
-        ({ isCorrect, selectedOption, correctAnswerDisplay } = reportDropdown(questionBlock, questionBlock.dataset.questionIndex, false))
-
-
-        if (selectedOption.dataset.correct === 'true') {
-            dropdown.style.border = "2px solid #1e7e34";
-            dropdown.style.backgroundColor = "#28a745";
-        }
-        else {
-            dropdown.style.border = "2px solid #b02a37";
-            dropdown.style.backgroundColor = "#dc3545";
-            feedbackText = `Correct Answer: <strong>${correctAnswerDisplay}</strong>`;
-        }
-
-    }
-    // ordering
-    else if (type === 'ordering') {
-        const items = Array.from(questionBlock.querySelectorAll('.quiz-order-item'))
-        let correctOrder;
-        items.forEach((item, pos) => {
-            item.style.pointerEvents = 'none';
-
-            if (Number(item.dataset.correctOrder) === pos + 1) {
-                item.style.backgroundColor = "#28a745";
-                item.style.border = "2px solid #1e7e34";
-            } else {
-                item.style.border = "2px solid #b02a37";
-                item.style.backgroundColor = "#dc3545";
-            }
-        });
-        ({ isCorrect, correctOrder } = reportOrdering(questionBlock, questionBlock.dataset.questionIndex, false))
-        if (!isCorrect) {
-            feedbackText = `Correct answers: ${correctOrder}`
-        }
-    }
-    // matching
-    else if (type === 'matching') {
-        const solvedArea = questionBlock.querySelector('.quiz-match-solved-area')
-        const userPairs = Array.from(solvedArea.querySelectorAll('.quiz-match-pair'));
-        let correctPairs = ""
-        userPairs.forEach(pair => {
-            pair.style.pointerEvents = 'none';
-
-            if (pair.dataset.pairId === pair.dataset.userRight) {
-                pair.classList.add('correct');
-            } else {
-                pair.classList.add('incorrect');
-            }
-        })
-        const remainingItems = questionBlock.querySelectorAll('.quiz-match-item');
-        remainingItems.forEach(i => i.style.pointerEvents = 'none');
-
-        ({ isCorrect, correctPairs } = reportMatching(questionBlock, questionBlock.dataset.questionIndex, false))
-        if (!isCorrect) {
-            feedbackText = `Correct answer: ${correctPairs}`
-        }
-    }
-
-    // feedback
-    feedbackMsg = document.createElement('div');
-    feedbackMsg.className = 'quiz-feedback-msg';
-    questionBlock.appendChild(feedbackMsg);
-
-    if (isCorrect) {
-        feedbackMsg.innerHTML = "<strong>Correct!</strong>";
-        feedbackMsg.style.backgroundColor = "#d4edda";
-        feedbackMsg.style.color = "#28a745";
-        feedbackMsg.style.border = "1px solid #c3e6cb";
-    } else {
-        feedbackMsg.innerHTML = `<strong>Incorrect.</strong> <br>${feedbackText}`;
-        feedbackMsg.style.backgroundColor = "#f8d7da";
-        feedbackMsg.style.color = "#dc3545";
-        feedbackMsg.style.border = "1px solid #f5c6cb";
-    }
-
-    //added for explanations
-    const explanationDiv = questionBlock.querySelector('.quiz-explanation');
-
-    if (explanationDiv) {
-        const markdownContent = explanationDiv.getAttribute('data-explanation-markdown');
-
-        if (markdownContent) {
-            const decoded = decodeHTMLEntities(markdownContent);
-            const rendered = renderMarkdownToHTML(decoded);
-
-            explanationDiv.innerHTML = `
-                <div style="margin-top: 15px; padding: 12px; background-color: #e8f4f8; border-left: 4px solid #2196F3; border-radius: 4px;">
-                    <strong style="color: #1976D2;">Explanation:</strong>
-                    <div style="margin-top: 8px; color: #333;">
-                        ${rendered}
-                    </div>
-                </div>
-            `;
-
-            // Show the div
-            explanationDiv.style.display = 'block';
-
-            // Smoothly nudge the screen so the user sees the explanation
-            explanationDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    }
-
-}
 function handleSelection(clickedButton, type, allButtons) {
     const isSelected = clickedButton.classList.contains("selected");
 
@@ -465,16 +417,12 @@ function setupDropdown(dropdown) {
 
     dropdown.innerHTML = '';
     if (placeholder) dropdown.appendChild(placeholder);
-    options.forEach(opt => {
-        const val = opt.innerHTML;
-        opt.innerHTML = val;
-        dropdown.appendChild(opt);
-    });
+    options.forEach(opt => dropdown.appendChild(opt));
 
     dropdown.selectedIndex = 0;
 }
 
-// ---------- matching setup  ----------
+// ---------- matching setup (RESTORED LOGIC) ----------
 function setupMatching(questionBlock) {
     const leftContainer = questionBlock.querySelector(".quiz-match-left");
     const rightContainer = questionBlock.querySelector(".quiz-match-right");
@@ -616,9 +564,9 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
 
     // If questionOrder is undefined (safety fallback), default to original order
     if (!questionOrder || questionOrder.length !== questions.length) {
-        questionOrder = Array.from({ length: questions.length }, (_, i) => i);
+         questionOrder = Array.from({length: questions.length}, (_, i) => i);
     }
-
+    
     // Check if we have a valid time to display (i.e., the timer was active)
     const displayTime = (timeTakenSeconds !== null && !isNaN(timeTakenSeconds) && timeTakenSeconds >= 0);
 
@@ -630,18 +578,18 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
     }
 
     questionOrder.forEach((actualIndex, displayIndex) => {
-        const q = questions[actualIndex];
-
+        const q = questions[actualIndex]; 
+        
         let result;
         const type = q.dataset.type;
 
-        // The index passed here is displayIndex, which correctly numbers the report 1, 2, 3...
+        // Note: The index passed here is displayIndex, which correctly numbers the report 1, 2, 3...
         if (type === "ordering") {
             result = reportOrdering(q, displayIndex);
         } else if (type === "dropdown") {
             result = reportDropdown(q, displayIndex);
-        } else if (type === "matching") {
-            result = reportMatching(q, displayIndex);
+        } else if (type === "matching") { 
+            result = reportMatching(q, displayIndex); 
         } else {
             result = reportQuestion(q, displayIndex);
         }
@@ -649,7 +597,7 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
         questionsHTML += result.html;
         if (result.isCorrect) totalScore++;
     });
-
+  
     const timeHtml = displayTime
         ? `<p style="font-size: 1em; margin-bottom: 20px;"> 
                Time Taken: <strong>${timeTakenDisplay}</strong>
@@ -683,26 +631,12 @@ function reportQuestion(questionElement, index) {
         if (btn.dataset.correct === "false") isCorrect = false;
     });
 
-    const formatReportIcons = (btns) => {
-        if (btns.length === 0) return '<em>None</em>';
-        return `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">` + 
-               btns.map(b => `<span class="report-answer-item">${b.innerHTML}</span>`).join("") + 
-               `</div>`;
-    };
+    const formatList = (btns) => btns.map(b => b.innerHTML).join(', ') || '<em>None</em>';
 
-    const explanationHTML = extractExplanationHTML(questionElement);
-
-    return createReportCard(
-        index, 
-        questionText, 
-        isCorrect, 
-        formatReportIcons(userSelected), 
-        formatReportIcons(correctAnswers), 
-        explanationHTML
-    );
+    return createReportCard(index, questionText, isCorrect, formatList(userSelected), formatList(correctAnswers));
 }
 
-function reportDropdown(questionBlock, index, feedbackEnd = true) {
+function reportDropdown(questionBlock, index) {
     const questionTextElement = questionBlock.querySelector('.quiz-question');
     const dropdown = questionBlock.querySelector('.quiz-dropdown');
 
@@ -710,8 +644,8 @@ function reportDropdown(questionBlock, index, feedbackEnd = true) {
     let userAnswerDisplay = "None";
     let correctAnswerDisplay = "";
 
-    const selectedOption = dropdown.options[dropdown.selectedIndex];
     if (dropdown) {
+        const selectedOption = dropdown.options[dropdown.selectedIndex];
 
         // Find correct text
         dropdown.querySelectorAll('option').forEach(option => {
@@ -736,44 +670,27 @@ function reportDropdown(questionBlock, index, feedbackEnd = true) {
         dropdownInClone.parentNode.replaceChild(placeholder, dropdownInClone);
     }
 
-    const explanationHTML = extractExplanationHTML(questionBlock);
-    if (feedbackEnd)
-        return createReportCard(index, questionClone.innerHTML, isCorrect, userAnswerDisplay, correctAnswerDisplay, explanationHTML);
-
-    return {
-        isCorrect,
-        selectedOption: selectedOption,
-        correctAnswerDisplay: correctAnswerDisplay,
-        explanationHTML: explanationHTML
-    };
+    return createReportCard(index, questionClone.innerHTML, isCorrect, userAnswerDisplay, correctAnswerDisplay);
 }
 
-function reportOrdering(questionElement, index, feedbackEnd = true) {
+function reportOrdering(questionElement, index) {
     const questionText = questionElement.querySelector('.quiz-question').innerHTML;
     const items = Array.from(questionElement.querySelectorAll('.quiz-order-item'));
 
     const isCorrect = items.every((item, pos) => Number(item.dataset.correctOrder) === pos + 1);
 
-    const userOrder = `<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;">` + 
-        items.map(item => `<span class="report-order-item">${item.innerHTML}</span>`).join("") + 
-        `</div>`;
+    const userOrder = items.map(i => i.innerHTML).join(", ");
 
-    const correctOrder = `<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;">` + 
-        items.slice()
-            .sort((a, b) => Number(a.dataset.correctOrder) - Number(b.dataset.correctOrder))
-            .map(item => `<span class="report-order-item">${item.innerHTML}</span>`)
-            .join("") + 
-        `</div>`;
+    const correctOrder = items.slice()
+        .sort((a, b) => Number(a.dataset.correctOrder) - Number(b.dataset.correctOrder))
+        .map(i => i.innerText)
+        .join(", ");
 
-    if(feedbackEnd)
-        return createReportCard(index, questionText, isCorrect, userOrder, correctOrder);
-    return {
-        isCorrect,
-        correctOrder: correctOrder
-    }
+    return createReportCard(index, questionText, isCorrect, userOrder, correctOrder);
 }
 
-function reportMatching(questionBlock, index, feedbackEnd = true) {
+// ---------- reporting for matching ----------
+function reportMatching(questionBlock, index) {
     const questionText = questionBlock.querySelector(".quiz-question").innerHTML;
 
     // Left & right items
@@ -812,103 +729,17 @@ function reportMatching(questionBlock, index, feedbackEnd = true) {
         userPairs.length === correctPairs.length &&
         userPairs.every(up => up.left === up.right);
 
-    const explanationHTML = extractExplanationHTML(questionBlock);
-
-    if (feedbackEnd)
-        return createReportCard(
-            index,
-            questionText,
-            isCorrect,
-            userPairs.map(p => p.label).join(", ") || "<em>None</em>",
-            correctPairs.map(p => p.label).join(", "),
-            explanationHTML
-        );
-    return {
+    return createReportCard(
+        index,
+        questionText,
         isCorrect,
-        correctPairs: correctPairs.map(p => p.label).join(", "),
-        explanationHTML: explanationHTML
-    }
+        userPairs.map(p => p.label).join(", ") || "<em>None</em>",
+        correctPairs.map(p => p.label).join(", ")
+    );
 }
 
-// EXTRACT AND RENDER EXPLANATION FROM QUESTION BLOCK ---
-/**
- * Extracts explanation content from a question block and returns rendered HTML.
- * The explanation is stored in a hidden div with a data-explanation-markdown attribute.
- * This function retrieves the markdown content and renders it as HTML with proper formatting.
- * 
- * @param {HTMLElement} questionElement - The question block element
- * @returns {string} - HTML string containing the formatted explanation, or empty string if none exists
- */
-function extractExplanationHTML(questionElement) {
-    const explanationDiv = questionElement.querySelector('.quiz-explanation');
-
-    if (!explanationDiv) {
-        return '';
-    }
-
-    // Get the markdown content from the data attribute
-    const markdownContent = explanationDiv.getAttribute('data-explanation-markdown');
-
-    if (!markdownContent) {
-        return '';
-    }
-
-    // Decode HTML entities
-    const decodedContent = decodeHTMLEntities(markdownContent);
-
-    // Render markdown to HTML (preserve links, formatting, etc.)
-    const renderedHTML = renderMarkdownToHTML(decodedContent);
-
-    return `
-        <div style="margin-top: 15px; padding: 12px; background-color: #e8f4f8; border-left: 4px solid #2196F3; border-radius: 4px;">
-            <strong style="color: #1976D2;">Explanation:</strong>
-            <div style="margin-top: 8px; color: #333;">
-                ${renderedHTML}
-            </div>
-        </div>
-    `;
-}
-
-/**
- * Decodes HTML entities in a string.
- * Used to decode explanation content stored in data attributes.
- * 
- * @param {string} text - The text with HTML entities
- * @returns {string} - The decoded text
- */
-function decodeHTMLEntities(text) {
-    const textarea = document.createElement('textarea');
-    textarea.innerHTML = text;
-    return textarea.value;
-}
-
-/**
- * Renders simple markdown to HTML.
- * Supports:
- * - Inline links: [text](url)
- * - Basic formatting (preserved as-is since it's already in HTML context)
- * 
- * This is a lightweight markdown renderer that preserves standard markdown links
- * and converts them to clickable HTML anchors.
- * 
- * @param {string} markdown - The markdown text
- * @returns {string} - The rendered HTML
- */
-function renderMarkdownToHTML(markdown) {
-    // Convert markdown links [text](url) to HTML <a> tags
-    // This regex matches standard markdown link syntax
-    let html = markdown.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
-        // Preserve the link exactly as written
-        return `<a href="${url}" style="color: #1976D2; text-decoration: underline;">${text}</a>`;
-    });
-
-    return html;
-}
-
-
-
-// Reusable HTML generator for reports 
-function createReportCard(index, questionText, isCorrect, userAns, correctAns, explanationHTML = '') {
+// Reusable HTML generator for reports
+function createReportCard(index, questionText, isCorrect, userAns, correctAns) {
     const statusIcon = isCorrect ? '✅' : '❌';
     const borderColor = isCorrect ? 'green' : 'red';
     const userColor = isCorrect ? 'green' : 'red';
@@ -928,7 +759,6 @@ function createReportCard(index, questionText, isCorrect, userAns, correctAns, e
                     <span style="color: green">${correctAns}</span>
                 </div>
             </div>
-            ${explanationHTML}
         </div>
     `;
     return { html, isCorrect };
@@ -964,33 +794,33 @@ function formatTime(totalSeconds) {
 
 function shuffleQuestionOrder(container, questions) {
     // Create array of indices [0, 1, 2, ...]
-    const indices = Array.from({ length: questions.length }, (_, i) => i);
-
+    const indices = Array.from({length: questions.length}, (_, i) => i);
+    
     // Shuffle the indices
     shuffleArray(indices);
-
+    
     let questionContainer = container;
     const mainWrapper = container.querySelector(".quiz-main-wrapper");
     if (mainWrapper && mainWrapper.contains(questions[0])) {
         questionContainer = mainWrapper;
     }
-
+    
     const insertionPoint = questionContainer.querySelector(".quiz-navigation") || questionContainer.querySelector(".quiz-results");
-
+    
     if (!insertionPoint) {
         console.warn("Quiz navigation or results container missing. Questions appended at end.");
     }
 
     // Reorder DOM elements based on shuffled indices
     const questionArray = Array.from(questions);
-
+    
     // Remove all questions from container
     questionArray.forEach(q => q.remove());
-
+    
     // Add them back in shuffled order using insertBefore
     indices.forEach(index => {
         const questionElement = questionArray[index];
-
+        
         // If an insertion point exists, insert the question before it.
         if (insertionPoint) {
             questionContainer.insertBefore(questionElement, insertionPoint);
@@ -999,7 +829,7 @@ function shuffleQuestionOrder(container, questions) {
             questionContainer.appendChild(questionElement);
         }
     });
-
+    
     // Return the new logical order
     return indices;
 }

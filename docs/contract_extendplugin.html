@@ -1,0 +1,259 @@
+<!-- THIS SIMPLE HTML FILE IS USED SO WE ALL HAVE A COMMON GROUND
+      TEAM PYTHON: you need to match this html file  coming from the markdown syntax 
+      TEAM JS: you need to make this mockup html file interactive
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Plugin Mockup</title>
+    <link rel="stylesheet" href="quiz.css">
+</head>
+<!-- data-question-index identifies each question block-->
+<!-- data-correct indetifies which option is the right one -->
+<!-- use style="display:none" to not display that question
+ (only 1 question should be visible at a time) 
+    "selected" class will be applied when the user clicks on the button
+    and will also modify the color so that the user can see that the button was pressed
+-->
+
+<!-- use .shouldbecorrect for when feedback mode is set to immediate -->
+
+<body>
+    <div>
+    </div>
+    <div class="quiz-container" markdown="1" data-timer="100" data-layout="list" data-feedback-mode="immediate"
+        data-shuffle-questions="false" data-baseline="4.0" data-allow-back="true">
+        <!-- added attributes: data-timer, data-layout, data-feedback-mode, data-shuffle-questions -->
+
+        <!-- start screen with the metadata -->
+        <div class="quiz-start-screen">
+            <h2 class="quiz-title">My Quiz</h2>
+
+            <div class="quiz-description">
+                <p>This is a description parsed from the markdown.</p>
+            </div>
+
+            <div class="quiz-meta-info">
+                <span class="quiz-meta-item"> Author: John Doe</span>
+                <span class="quiz-meta-item"> Time: 10 Min</span>
+            </div>
+
+            <button class="quiz-btn-start">Start Quiz</button>
+        </div>
+        <!-- end of start page -->
+
+        <!-- wrapper class so we can hide the question until the user presses the start button -->
+        <div class="quiz-main-wrapper" style="display: none;">
+
+            <!-- add the timer display to the header -->
+            <div class="quiz-header">
+                <div class="quiz-timer-display">Time Left: <span id="time-display">10:00</span></div>
+
+                <!-- also the progress-conter gets placed inside the header -->
+                <div class="quiz-progress-container">
+                    <div class="quiz-progress-bar" style="width: 50%;"></div>
+                </div>
+            </div>
+            <!-- end of header -->
+
+            <div class="quiz-question-block" data-question-index="0" data-type="single">
+                <!--THIS WILL HAVE AN ATTRIBUTE CALLED "data-type="single" as it has only one right answer-->
+                <p class="quiz-question">What is 2 + 2?</p>
+                <div class="quiz-answer-container">
+                    <button class="quiz-answer" data-correct="false">3</button> <!--syntax:[]-->
+                    <button class="quiz-answer" data-correct="true">4</button> <!--syntax:[x]-->
+                    <button class="quiz-answer" data-correct="false">5</button><!--add class "selected"
+          only if this answer is clicked by the user-->
+                </div>
+
+                <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
+
+                <div class="quiz-feedback-content" style="display: none;">
+
+                    <div class="quiz-explanation">
+                        The correct answer is 4, as this is the foundational result of addition in the decimal system.
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="quiz-question-block" data-question-index="1" data-type="multiple" style="display: none;">
+                <p class="quiz-question">Which of the following countries are officially located on the continent of
+                    South America?</p>
+                <div class="quiz-answer-container">
+                    <button class="quiz-answer" data-correct="false">Costa Rica</button>
+                    <button class="quiz-answer" data-correct="true">Bolivia</button>
+                    <button class="quiz-answer" data-correct="false">Mexico</button>
+                    <button class="quiz-answer" data-correct="true">Uruguay</button>
+                    <button class="quiz-answer" data-correct="true">Suriname</button>
+                </div>
+
+                <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
+            </div>
+
+            <!-- Dropdown -->
+            <div class="quiz-question-block" data-question-index="2" data-type="dropdown" style="display: none;">
+                <p class="quiz-question">
+                    The octopus has
+                    <!-- data-correct holds the TEXT of the correct answer -->
+                    <select class="quiz-dropdown">
+                        <option disabled>Choose...</option>
+                        <option data-correct="false">1</option>
+                        <option data-correct="false">4</option>
+                        <option data-correct="true">3</option>
+                        <option data-correct="false">8</option>
+                    </select>
+                    hearts
+                </p>
+                <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
+            </div>
+            <!--ORDERING-->
+            <div class="quiz-question-block" data-question-index="3" data-type="ordering" style="display: none;">
+                <p class="quiz-question">Put the planets in order from the Sun:</p>
+                <div class="quiz-ordering-list">
+                    <div class="quiz-order-item" data-correct-order="1">Mercury</div>
+                    <div class="quiz-order-item" data-correct-order="2">Venus</div>
+                    <div class="quiz-order-item" data-correct-order="3">Earth</div>
+                    <div class="quiz-order-item" data-correct-order="4">Mars</div>
+                </div>
+                <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
+            </div>
+
+            <!--MATCHING-->
+            <div class="quiz-question-block" data-question-index="4" data-type="matching" style="display:none">
+                <p class="quiz-question">Match the animals with their sound!</p>
+                <!-- Start empty. JS moves items here. -->
+                <div class="quiz-match-solved-area"> <!--THIS IS ONLY AND EXAMPLE OF WHAT SHOULD BE PUT HERE IN CASE THE USER PRESSES ON "DOG" AND ON "BARK" so this 
+          will be done by the js team-->
+                    <button class="quiz-match-pair" data-left-id="1" data-right-id="2">
+                        Dog -- Meow
+                    </button>
+                </div>
+
+                <div class="quiz-matching-container">
+                    <div class="quiz-match-left">
+                        <button class="quiz-match-item" data-pair-id="1">Dog</button>
+                        <button class="quiz-match-item" data-pair-id="2">Cat</button>
+                    </div>
+                    <div class="quiz-match-right">
+                        <button class="quiz-match-item" data-pair-id="2">Meow</button>
+                        <button class="quiz-match-item" data-pair-id="1">Bark</button>
+                    </div>
+                </div>
+                <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
+            </div>
+
+            <!--PICTURE QUESTIONS-->
+            <div class="quiz-question-block" data-question-index="5" data-type="single" style="display: none;">
+                <p class="quiz-question">Identify the object shown below:
+                    <br>
+                    <img alt="Apple logo" src="apple_logo.png">
+                </p>
+                <div class="quiz-answer-container">
+                    <button class="quiz-answer" data-correct="false">Microsoft</button>
+                    <button class="quiz-answer" data-correct="true">Apple</button>
+                    <button class="quiz-answer" data-correct="false">Google</button>
+                    <button class="quiz-answer" data-correct="false">Meta</button>
+                </div>
+                <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
+            </div>
+
+            <div class="quiz-question-block" data-question-index="6" data-type="single" style="display: none;">
+                <p class="quiz-question">Which is the aaple logo?
+                <div class="quiz-answer-container">
+                    <button class="quiz-answer" data-correct="true"> <img alt="placeholder" src="microsoft_logo.png">
+                        </p> </button>
+                    <button class="quiz-answer" data-correct="false"> <img alt="placeholder" src="apple_logo.png"></p>
+                    </button>
+                    <button class="quiz-answer" data-correct="false"> <img alt="placeholder" src="meta_logo.png"></p>
+                    </button>
+                    <button class="quiz-answer" data-correct="false"><img alt="placeholder"
+                            src="google_logo.png"></button>
+                </div>
+                <button class="quiz-btn-check-answer" style="display: none;">Check Answer</button>
+            </div>
+
+            <!-- footer for navigation buttons - useful for list/book mode -->
+            <div class="quiz-controls-footer">
+                <div class="quiz-navigation">
+                    <button class="quiz-nav-previous">&ltPrevious</button>
+                    <span class="quiz-status-text">Question 1/X</span>
+                    <button class="quiz-nav-next">Next&gt</button>
+                </div>
+
+                <button class="quiz-nav-submit">Submit</button>
+            </div>
+
+            
+        <div class="quiz-results">
+            <button class="quiz-btn-retake" style="display: none;">
+                Retake Quiz
+            </button>
+        </div>
+
+        </div>
+        <!-- end of the wrapper class -->
+
+
+
+        <!-- jsDelivr :: Sortable :: Latest (https://www.jsdelivr.com/package/npm/sortablejs) -->
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+        <script src="script.js"></script>
+    </div>
+</body>
+
+</html>
+
+<!--this will be the markdown file:
+
+inlcude('FILE_PATH')
+
+@start
+@title: My Quiz
+@description: This is a description parsed from the markdown.
+@author: John Doe
+@timer_limit: 100
+@layout: list 
+@feedback_mode: immediate
+@id: easy //only for imported quizzes - optional
+---
+What is 2 + 2?
+[] 3
+[x] 4
+[] 5
+---
+Which of the following countries are officially located on the continent of South America?
+[] Costa Rica
+[x] Bolivia
+[] Mexico
+[x] Uruguay
+[x] Suriname
+---
+The octopus has {{3|1|4|8}} hearts
+---
+Put the planets in order from the sun
+(1) Mercury
+(2) Venus
+(3) Earth
+(4) Mars
+---
+Identify the object shown below:
+![Apple logo](/apple_logo.png)
+- [ ] Microsoft
+- [x] Apple
+- [ ] Google
+- [ ] Meta
+---
+Which is the apple logo?
+- [ ] ![placeholder](/mircosoft_logo.png)
+- [x] ![placeholder](/apple_logo.png)
+- [ ] ![placeholder](/meta_logo.png)
+- [ ] ![placeholder](/google_logo.png)
+@end
+
+
+-->

@@ -284,6 +284,13 @@ class QuizPlugin(BasePlugin):
             # Add Results Div
             html_output.append('<div class="quiz-results"></div>')
 
+            # 2. Add the Retake Button (Safe container OUTSIDE the results div)
+            html_output.append('''
+                <div class="quiz-retake-container" style="text-align: center; margin-top: 20px;">
+                    <button class="quiz-btn-retake" style="display: none;">Retake Quiz</button>
+                </div>
+            ''')
+
             # Close the quiz-main-wrapper
             html_output.append('</div>') 
             
