@@ -1,12 +1,12 @@
-html, body {
+/* html, body {
     background-color: #9b9ea3; 
     font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: 20px;
     margin: 0;
     padding: 0;
     width: 100%;
-    overflow-x: hidden; /* prevent horizontal scroll */
-}
+    overflow-x: hidden;
+} */
 
 /* Card */
 .quiz-start-screen {
@@ -464,4 +464,28 @@ html, body {
         margin: 5px 0;
         min-width: 120px;
     }
+
+    .quiz-matching-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .quiz-match-left, .quiz-match-right {
+        width: 100%;
+    }
+
+    .quiz-match-item {
+        width: 100%; 
+        box-sizing: border-box;
+    }
+}
+
+.quiz-answer mjx-container, 
+.quiz-match-item mjx-container,
+.quiz-order-item mjx-container {
+    margin: 5px 0;
+    display: inline-block; 
+    max-width: none !important; 
+    overflow-x: visible !important;
+    vertical-align: middle;
 }

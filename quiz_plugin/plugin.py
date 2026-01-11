@@ -24,6 +24,9 @@ class QuizPlugin(BasePlugin):
         # Add SortableJS for the ordering questions
         config['extra_javascript'].append('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js')
 
+        # Add MathJax Configuration for LaTeX math
+        config['extra_javascript'].append("https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js")
+
         return config
 
     def on_post_build(self, config):
@@ -48,7 +51,10 @@ class QuizPlugin(BasePlugin):
 # --- REGEX DEFINITIONS ---
     # 1. Main Container & Inclusion Rules
     INCLUDE_REGEX = re.compile(r'^\s*@include:\s*(.+)$', flags=re.MULTILINE)
-    QUIZ_BLOCK_REGEX = re.compile(r'@START(.*?)@END', flags=re.DOTALL)
+    # QUIZ_BLOCK_REGEX = re.compile(r'@START(.*?)@END', flags=re.DOTALL)
+    # QUIZ_BLOCK_REGEX = re.compile(r'(?ms)^\s*@START\s*$\n(.?)\n^\s@END\s*$')
+    # QUIZ_BLOCK_REGEX = re.compile(r'(?<!\\)@START\s*(.*?)\s*@END', flags=re.DOTALL | re.IGNORECASE)
+    QUIZ_BLOCK_REGEX = re.compile(r'(?m)^\s*@START\s*$\n([\s\S]*?)\n^\s*@END\s*$', flags=re.IGNORECASE)
     
     # 2. Global Metadata & Structural Rules
     QUIZ_META_LINE_REGEX = re.compile(r'^\s*@(\w+)\s*:\s*(.+)$', re.MULTILINE)
@@ -349,7 +355,7 @@ class QuizPlugin(BasePlugin):
                 item_raw_text = order_match.group(2).strip()
                 
                 # 1. Escape the text for security
-                item_html = html.escape(item_raw_text)
+                item_html = self._safe_math_escape(item_raw_text)
                 # 2. Re-insert images safely
                 if self.IMAGE_REGEX.search(item_raw_text):
                     for m in self.IMAGE_REGEX.finditer(item_raw_text):
@@ -368,7 +374,7 @@ class QuizPlugin(BasePlugin):
                 
                 ans_raw_text = ans_match.group(2).strip()
                 # 1. Escape for security
-                ans_html_text = html.escape(ans_raw_text)
+                ans_html_text = self._safe_math_escape(ans_raw_text)
                 # 2. Re-insert images safely
                 if self.IMAGE_REGEX.search(ans_raw_text):
                     for m in self.IMAGE_REGEX.finditer(ans_raw_text):
@@ -382,7 +388,7 @@ class QuizPlugin(BasePlugin):
 
         # question
         raw_question_body = " ".join(question_text_parts)
-        full_question_text = html.escape(raw_question_body)
+        full_question_text = self._safe_math_escape(raw_question_body)
         
         # Safely re-insert images into the escaped question body
         if self.IMAGE_REGEX.search(raw_question_body):
@@ -516,3 +522,13 @@ class QuizPlugin(BasePlugin):
                 .replace("'", '&#39;')
                 .replace('<', '&lt;')
                 .replace('>', '&gt;'))
+    
+    def _safe_math_escape(self, text):
+        """Escapes HTML but preserves backslashes for MathJax."""
+        if not text:
+            return ""
+            
+        # 1. Perform standard escape
+        escaped = html.escape(text)
+        # 2. Re-convert the double-escaped ampersands back to single backslashes 
+        return escaped.replace("&amp;\\", "\\").replace("&#x27;", "'")

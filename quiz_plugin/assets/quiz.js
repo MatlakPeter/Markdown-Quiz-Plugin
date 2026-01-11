@@ -1,3 +1,19 @@
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+    },
+    chtml: {
+        scale: 1,
+        minScale: 0.6,
+        matchFontHeight: true
+    },
+    options: {
+        ignoreHtmlClass: 'tex2jax_ignore',
+        processHtmlClass: 'tex2jax_process'
+    }
+};
 /**
  * =============================================================================
  * SECTION 1: MAIN ENTRY POINT
@@ -173,6 +189,7 @@ function initializeQuiz(container) {
             nextBtn.style.display = isLast ? "none" : "inline-block";
             submitBtn.style.display = isLast ? "inline-block" : "none";
         }
+        triggerMathJax();
     }
 
     function handleQuizSubmit(timeExpired = false) {
@@ -202,6 +219,7 @@ function initializeQuiz(container) {
             resultsDiv.innerHTML = reportHTML;
             resultsDiv.style.display = 'block'; // Force visibility
             resultsDiv.scrollIntoView({ behavior: 'smooth' }); // Smooth scroll to the score
+            triggerMathJax();
             container.classList.add("quiz-results-shown");
         }
     }
@@ -423,6 +441,7 @@ function handleCheckButton(btn, questionBlock) {
             explanationDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     }
+    triggerMathJax();
 
 }
 function handleSelection(clickedButton, type, allButtons) {
@@ -685,19 +704,19 @@ function reportQuestion(questionElement, index) {
 
     const formatReportIcons = (btns) => {
         if (btns.length === 0) return '<em>None</em>';
-        return `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">` + 
-               btns.map(b => `<span class="report-answer-item">${b.innerHTML}</span>`).join("") + 
-               `</div>`;
+        return `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">` +
+            btns.map(b => `<span class="report-answer-item">${b.innerHTML}</span>`).join("") +
+            `</div>`;
     };
 
     const explanationHTML = extractExplanationHTML(questionElement);
 
     return createReportCard(
-        index, 
-        questionText, 
-        isCorrect, 
-        formatReportIcons(userSelected), 
-        formatReportIcons(correctAnswers), 
+        index,
+        questionText,
+        isCorrect,
+        formatReportIcons(userSelected),
+        formatReportIcons(correctAnswers),
         explanationHTML
     );
 }
@@ -754,18 +773,18 @@ function reportOrdering(questionElement, index, feedbackEnd = true) {
 
     const isCorrect = items.every((item, pos) => Number(item.dataset.correctOrder) === pos + 1);
 
-    const userOrder = `<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;">` + 
-        items.map(item => `<span class="report-order-item">${item.innerHTML}</span>`).join("") + 
+    const userOrder = `<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;">` +
+        items.map(item => `<span class="report-order-item">${item.innerHTML}</span>`).join("") +
         `</div>`;
 
-    const correctOrder = `<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;">` + 
+    const correctOrder = `<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;">` +
         items.slice()
             .sort((a, b) => Number(a.dataset.correctOrder) - Number(b.dataset.correctOrder))
             .map(item => `<span class="report-order-item">${item.innerHTML}</span>`)
-            .join("") + 
+            .join("") +
         `</div>`;
 
-    if(feedbackEnd)
+    if (feedbackEnd)
         return createReportCard(index, questionText, isCorrect, userOrder, correctOrder);
     return {
         isCorrect,
@@ -785,11 +804,11 @@ function reportMatching(questionBlock, index, feedbackEnd = true) {
     const rightLabel = {};
 
     leftItems.forEach(item => {
-        leftLabel[item.dataset.pairId] = item.textContent.trim();
+        leftLabel[item.dataset.pairId] = item.innerHTML.trim();
     });
 
     rightItems.forEach(item => {
-        rightLabel[item.dataset.pairId] = item.textContent.trim();
+        rightLabel[item.dataset.pairId] = item.innerHTML.trim();
     });
 
     // User pairs
@@ -819,8 +838,8 @@ function reportMatching(questionBlock, index, feedbackEnd = true) {
             index,
             questionText,
             isCorrect,
-            userPairs.map(p => p.label).join(", ") || "<em>None</em>",
-            correctPairs.map(p => p.label).join(", "),
+            userPairs.map(p => `<div>${p.label}</div>`).join("") || "<em>None</em>",
+            correctPairs.map(p => `<div>${p.label}</div>`).join(""),
             explanationHTML
         );
     return {
@@ -1002,4 +1021,11 @@ function shuffleQuestionOrder(container, questions) {
 
     // Return the new logical order
     return indices;
+}
+
+// for LaTeX math
+function triggerMathJax() {
+    if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise();
+    }
 }
