@@ -237,6 +237,7 @@ class QuizPlugin(BasePlugin):
                 "feedback-mode": self._normalize_choice(quiz_meta.get("feedback_mode"), allowed={"immediate", "end"}, default="end"),
                 "allow-skip": self._normalize_choice(quiz_meta.get("allow_skip"), allowed={"true", "false"}, default="true"),
                 "enable-survey": self._normalize_choice(quiz_meta.get("enable_survey"), allowed={"true", "false"}, default="false"),
+                "allow-back": quiz_meta.get("allow_back"),
             }
 
             data_attrs = " ".join(

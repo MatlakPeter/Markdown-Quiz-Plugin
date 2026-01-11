@@ -62,6 +62,7 @@ function initializeQuiz(container) {
 
     let questionOrder = [];
     const shouldShuffle = container.getAttribute("data-shuffle-questions") === "true";
+    const allow_back = container.getAttribute("data-allow-back") ? container.getAttribute("data-allow-back") === "true" : true;
 
     if (shouldShuffle) {
         questionOrder = shuffleQuestionOrder(container, questions); 
@@ -190,7 +191,7 @@ function initializeQuiz(container) {
                 progressBar.style.width = `${progressPercent}%`;
             }
 
-            prevBtn.style.display = currentIndex === 0 ? "none" : "inline-block";
+             prevBtn.style.display = currentIndex === 0 || allow_back === false ? "none" : "inline-block";
             const isLast = currentIndex === questions.length - 1;
             nextBtn.style.display = isLast ? "none" : "inline-block";
             submitBtn.style.display = isLast ? "inline-block" : "none";
