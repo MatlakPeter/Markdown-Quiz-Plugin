@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
  */
 function initializeQuiz(container) {
     // 1. Select Elements
-    const questions = container.querySelectorAll(".quiz-question-block");
+    let questions = container.querySelectorAll(".quiz-question-block");
     const nextBtn = container.querySelector(".quiz-nav-next");
     const prevBtn = container.querySelector(".quiz-nav-previous");
     const submitBtn = container.querySelector('.quiz-nav-submit');
@@ -63,6 +63,12 @@ function initializeQuiz(container) {
     let questionOrder = [];
     const shouldShuffle = container.getAttribute("data-shuffle-questions") === "true";
 
+    if (shouldShuffle) {
+        questionOrder = shuffleQuestionOrder(container, questions); 
+        questions = container.querySelectorAll(".quiz-question-block"); 
+    } else {
+        questionOrder = Array.from({ length: questions.length }, (_, i) => i); 
+    }
     // =========================================================
     // INTERNAL HELPER FUNCTIONS
     // =========================================================
@@ -648,13 +654,10 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
         timeTakenDisplay = formatTime(timeTakenSeconds);
     }
 
-    questionOrder.forEach((actualIndex, displayIndex) => {
-        const q = questions[actualIndex];
-
+    questions.forEach((q, displayIndex) => {
         let result;
         const type = q.dataset.type;
 
-        // The index passed here is displayIndex, which correctly numbers the report 1, 2, 3...
         if (type === "ordering") {
             result = reportOrdering(q, displayIndex);
         } else if (type === "dropdown") {
