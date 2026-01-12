@@ -43,6 +43,7 @@ function initializeQuiz(container) {
     // Layout & Feedback Detection
     const layout = container.getAttribute("data-layout") || "book";
     const feedbackType = container.getAttribute("data-feedback-mode");
+    const retakeBtn = container.querySelector(".quiz-btn-retake");
 
     // Timer specific elements
     const startScreen = container.querySelector(".quiz-start-screen");
@@ -65,14 +66,28 @@ function initializeQuiz(container) {
     const allow_back = container.getAttribute("data-allow-back") ? container.getAttribute("data-allow-back") === "true" : true;
 
     if (shouldShuffle) {
-        questionOrder = shuffleQuestionOrder(container, questions); 
-        questions = container.querySelectorAll(".quiz-question-block"); 
+        questionOrder = shuffleQuestionOrder(container, questions);
+        questions = container.querySelectorAll(".quiz-question-block");
     } else {
-        questionOrder = Array.from({ length: questions.length }, (_, i) => i); 
+        questionOrder = Array.from({ length: questions.length }, (_, i) => i);
     }
     // =========================================================
     // INTERNAL HELPER FUNCTIONS
     // =========================================================
+
+    if (resultsDiv && retakeBtn && resultsDiv.contains(retakeBtn)) {
+        const buttonWrapper = document.createElement("div");
+        buttonWrapper.className = "quiz-retake-wrapper";
+        buttonWrapper.style.textAlign = "center";
+        buttonWrapper.style.marginTop = "20px";
+
+        // Insert the wrapper AFTER the results div
+        resultsDiv.parentNode.insertBefore(buttonWrapper, resultsDiv.nextSibling);
+
+        // Move the button into the wrapper
+        buttonWrapper.appendChild(retakeBtn);
+    }
+
 
     function setupTimerDisplay() {
         if (timeLeft === null || timeLeft <= 0) {
@@ -191,7 +206,7 @@ function initializeQuiz(container) {
                 progressBar.style.width = `${progressPercent}%`;
             }
 
-             prevBtn.style.display = currentIndex === 0 || allow_back === false ? "none" : "inline-block";
+            prevBtn.style.display = currentIndex === 0 || allow_back === false ? "none" : "inline-block";
             const isLast = currentIndex === questions.length - 1;
             nextBtn.style.display = isLast ? "none" : "inline-block";
             submitBtn.style.display = isLast ? "inline-block" : "none";
@@ -213,6 +228,8 @@ function initializeQuiz(container) {
             if (navContainer) navContainer.style.display = "none";
             if (timerDisplayContainer) timerDisplayContainer.style.display = "none";
         }
+
+        if (retakeBtn) retakeBtn.style.display = "inline-block";
 
         let timeTaken = null;
         if (startTime !== null) {
@@ -236,12 +253,119 @@ function initializeQuiz(container) {
     // 1. Setup individual questions
     questions.forEach((q) => setupQuestion(q, feedbackType));
 
-    // 2. Handle Shuffle
+    function resetQuiz() {
+        // 1. Reset State Variables
+        currentIndex = 0;
+        timeLeft = isNaN(timeLimitSeconds) ? null : timeLimitSeconds;
+
+        // 2. DOM Cleanup: Questions and Answers
+        questions.forEach(q => {
+            // Remove feedback messages and explanations
+            const feedback = q.querySelector('.quiz-feedback-msg');
+            if (feedback) feedback.remove();
+
+            const explanation = q.querySelector('.quiz-explanation');
+            if (explanation) explanation.style.display = 'none';
+
+            // Reset Standard Buttons
+            q.querySelectorAll('.quiz-answer').forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('selected', 'correct', 'incorrect', 'shouldbecorrect');
+            });
+
+            // Reset Dropdowns
+            const dropdown = q.querySelector('.quiz-dropdown');
+            if (dropdown) {
+                dropdown.disabled = false;
+                dropdown.selectedIndex = 0;
+                dropdown.style.border = "";
+                dropdown.style.backgroundColor = "";
+            }
+
+            // 2. Handle Shuffle
+            // Reset Matching
+            if (q.dataset.type === 'matching') {
+                const solvedArea = q.querySelector('.quiz-match-solved-area');
+                if (solvedArea) solvedArea.innerHTML = '';
+                q.querySelectorAll('.quiz-match-item').forEach(item => {
+                    item.classList.remove('used', 'selected');
+                    item.style.display = '';
+                    item.style.pointerEvents = 'auto';
+                });
+            }
+
+            // Reset Ordering
+            if (q.dataset.type === 'ordering') {
+                q.querySelectorAll('.quiz-order-item').forEach(item => {
+                    item.style.border = "";
+                    item.style.backgroundColor = "";
+                    item.style.pointerEvents = 'auto';
+                });
+            }
+
+            // Reset Check Answer Buttons
+            const checkBtn = q.querySelector(".quiz-btn-check-answer");
+            if (checkBtn) {
+                checkBtn.disabled = false;
+            }
+        });
+
+        // 3. UI Toggle
+        if (resultsDiv) {
+            resultsDiv.style.display = 'none';
+            resultsDiv.innerHTML = '';
+        }
+        if (retakeBtn) {
+            retakeBtn.style.display = 'none';
+        }
+
+        // Restore Navigation & Submit Button ---
+        if (navContainer) {
+            navContainer.style.display = "flex"; // Restores the container hidden by handleQuizSubmit
+        }
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Submit"; // Reset text from "Submitted" or "Time Expired"
+            submitBtn.style.display = "none"; // Hide initially (updateDisplay will show it if needed)
+        }
+
+        // 4. Return to Start or First Question
+        if (startScreen) {
+            startScreen.style.display = 'block';
+            mainWrapper.style.display = 'none';
+        } else {
+            updateDisplay();
+        }
+
+        // 5. Reset Progress Bar
+        if (progressBar) progressBar.style.width = "0%";
+
+        // 6. Optional: Reshuffle if configured
+        if (shouldShuffle) {
+            questionOrder = shuffleQuestionOrder(container, questions);
+            // If we reshuffle, we must call updateDisplay again to show the new Q1
+            if (!startScreen) updateDisplay();
+        }
+
+    }
+
+    // =========================================================
+    // END OF INTERNAL HELPER FUNCTIONS
+    // =========================================================
+
+
+    // 3. Setup Questions (Shuffle answers, init dropdowns)
+    questions.forEach(setupQuestion);
+
+    // --- NEW RANDOMIZATION EXECUTION ---
     if (shouldShuffle) {
+        // Calls the new global utility function
         questionOrder = shuffleQuestionOrder(container, questions);
     } else {
+        // Keep original order: [0, 1, 2, 3, ...]
         questionOrder = Array.from({ length: questions.length }, (_, i) => i);
     }
+
 
     // 3. Init Display
     setupTimerDisplay();
@@ -255,6 +379,9 @@ function initializeQuiz(container) {
     if (nextBtn) nextBtn.addEventListener("click", () => changeQuestion(1));
     if (prevBtn) prevBtn.addEventListener("click", () => changeQuestion(-1));
     if (submitBtn) submitBtn.addEventListener('click', () => handleQuizSubmit(false));
+    if (retakeBtn) {
+        retakeBtn.addEventListener("click", () => resetQuiz());
+    }
 }
 
 /**

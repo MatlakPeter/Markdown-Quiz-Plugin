@@ -80,6 +80,21 @@
     box-shadow: 0 4px 0 #244f80;
 }
 
+/* Retake button */
+.quiz-btn-retake {
+    background-color: #2c69b5;
+    color: white;
+    padding: 10px 25px;
+    border-radius: 999px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.quiz-btn-retake:hover {
+    background-color: #234e9d;
+}
+
 /* quiz container */
 .quiz-container {
     font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
