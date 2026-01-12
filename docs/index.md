@@ -5,6 +5,7 @@
 @layout: book
 @feedback_mode: end
 @shuffle_questions: false
+@required_score: 4
 
 Identify the correct form of the Quadratic Formula used to solve $ax^2 + bx + c = 0$: 
 

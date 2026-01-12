@@ -519,3 +519,16 @@
 .quiz-btn-retake:hover {
     background-color: #234e9d;
 }
+
+/* --- New: Passing Score Styles (Epic #110) --- */
+
+/* Text Color States */
+.quiz-text-passed {
+    color: #28a745; /* Green */
+    border-left: 4px solid #28a745;
+}
+
+.quiz-text-failed {
+    color: #dc3545; /* Red */
+    border-left: 4px solid #dc3545;
+}
