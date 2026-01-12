@@ -10,6 +10,7 @@ What is 2 + 2?
 [] 3
 [x] 4
 [] 5
+@explanation: 2 plus 2 is 4
 ---
 Which of the following countries are officially located on the continent of South America?
 [] Costa Rica
