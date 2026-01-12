@@ -172,9 +172,39 @@ class QuizPlugin(BasePlugin):
 
     def _process_includes(self, markdown, page):
         def replace_include(match):
-            args = [arg.strip() for arg in match.group(1).split(',')]
-            filename = args[0]
-            specified_ids = [s.strip() for s in args[1:]] # Ensure IDs are trimmed
+            # Parse key=value pairs, allowing comma-continued id lists
+            raw_args = match.group(1).strip()
+            params = {}
+            current_key = None
+
+            for part in raw_args.split(','):
+                token = part.strip()
+                if not token:
+                    continue
+
+                if '=' in token:
+                    key, value = token.split('=', 1)
+                    current_key = key.strip()
+                    params[current_key] = value.strip()
+                else:
+                    # Support trailing values for id/ids lists: id=easy,medium,hard
+                    if current_key in ('id', 'ids'):
+                        existing = params.get(current_key, '')
+                        params[current_key] = (existing + ',' + token).strip(', ')
+                    else:
+                        log.warning(f"[QuizPlugin] Ignoring unrecognized token '{token}' in @include")
+
+            # Extract filename and IDs
+            filename = params.get('file', '')
+            if not filename:
+                error_msg = "Error: 'file' parameter is required in @include"
+                log.warning(f"[QuizPlugin] {error_msg}")
+                return f'<p style="color: red;">{error_msg}</p>'
+            
+            # Handle both 'id' and 'ids' parameters (comma-separated values)
+            id_value = params.get('id', params.get('ids', ''))
+            specified_ids = [s.strip() for s in id_value.split(',') if s.strip()] if id_value else []
+
             current_file_dir = os.path.dirname(page.file.abs_src_path)
             target_file_path = os.path.join(current_file_dir, filename)
 

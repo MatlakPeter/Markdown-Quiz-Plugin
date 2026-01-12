@@ -106,4 +106,4 @@ Vestibulum et scelerisque metus, sit amet varius odio. Aenean molestie nibh ac m
 
 Quisque porttitor lorem id ultrices facilisis. Duis hendrerit mauris et mauris malesuada ornare. Praesent ac eros fringilla, placerat lorem ut, gravida velit. Aenean nec euismod ante. Nullam blandit neque at mauris faucibus sollicitudin. Fusce et massa in eros fermentum molestie. Donec tortor purus, porttitor ac neque vitae, tincidunt mattis mauris. Pellentesque elementum consectetur commodo. Etiam a vehicula diam, eu commodo nulla. Donec in ornare tortor, a dignissim libero. Sed eu convallis elit, nec consequat dolor. Cras sollicitudin scelerisque interdum. Nulla sit amet aliquam enim, ut tempus urna. Pellentesque volutpat, sem a aliquet viverra, sem dolor aliquet dolor, sit amet feugiat nibh neque fringilla sem. Pellentesque rhoncus a erat ultrices scelerisque. 
 @dasjbdjas
-@include: quiz.md, easy
+@include: file=quiz.md, id=easy
