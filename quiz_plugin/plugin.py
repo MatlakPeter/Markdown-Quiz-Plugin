@@ -24,6 +24,9 @@ class QuizPlugin(BasePlugin):
         # Add SortableJS for the ordering questions
         config['extra_javascript'].append('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js')
 
+        # Add MathJax Configuration for LaTeX math
+        config['extra_javascript'].append("https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js")
+
         return config
 
     def on_post_build(self, config):
@@ -48,7 +51,10 @@ class QuizPlugin(BasePlugin):
 # --- REGEX DEFINITIONS ---
     # 1. Main Container & Inclusion Rules
     INCLUDE_REGEX = re.compile(r'^\s*@include:\s*(.+)$', flags=re.MULTILINE)
-    QUIZ_BLOCK_REGEX = re.compile(r'@START(.*?)@END', flags=re.DOTALL)
+    # QUIZ_BLOCK_REGEX = re.compile(r'@START(.*?)@END', flags=re.DOTALL)
+    # QUIZ_BLOCK_REGEX = re.compile(r'(?ms)^\s*@START\s*$\n(.?)\n^\s@END\s*$')
+    # QUIZ_BLOCK_REGEX = re.compile(r'(?<!\\)@START\s*(.*?)\s*@END', flags=re.DOTALL | re.IGNORECASE)
+    QUIZ_BLOCK_REGEX = re.compile(r'(?m)^\s*@START\s*$\n([\s\S]*?)\n^\s*@END\s*$', flags=re.IGNORECASE)
     
     # 2. Global Metadata & Structural Rules
     QUIZ_META_LINE_REGEX = re.compile(r'^\s*@(\w+)\s*:\s*(.+)$', re.MULTILINE)
@@ -90,7 +96,7 @@ class QuizPlugin(BasePlugin):
         return meta, cleaned
 
 
-    def _render_start_screen(self, meta):
+    def _render_start_screen(self, meta, total_questions=0):
         if not meta:
             return """
             <div class="quiz-start-screen">
@@ -118,6 +124,20 @@ class QuizPlugin(BasePlugin):
         if "time_limit" in meta:
             minutes = int(int(meta["time_limit"]))
             meta_items.append(f'<span class="quiz-meta-item"> Time: {minutes} seconds</span>')
+
+         # --- Epic #110: Passing Score Pill ---
+        if "required_score" in meta:
+            score_val = meta["required_score"]
+            display_text = f"Passing Score: {score_val}"
+            
+            # If it's a number, format as X/Y
+            if str(score_val).isdigit() and total_questions > 0:
+                 display_text = f"Passing Score: {score_val}/{total_questions}"
+
+            # Added class quiz-baseline-pill
+            meta_items.append(f'<span class="quiz-meta-item quiz-baseline-pill">{display_text}</span>')
+        # ------------------------------------
+
 
         if meta_items:
             parts.append(f'''
@@ -152,9 +172,39 @@ class QuizPlugin(BasePlugin):
 
     def _process_includes(self, markdown, page):
         def replace_include(match):
-            args = [arg.strip() for arg in match.group(1).split(',')]
-            filename = args[0]
-            specified_ids = [s.strip() for s in args[1:]] # Ensure IDs are trimmed
+            # Parse key=value pairs, allowing comma-continued id lists
+            raw_args = match.group(1).strip()
+            params = {}
+            current_key = None
+
+            for part in raw_args.split(','):
+                token = part.strip()
+                if not token:
+                    continue
+
+                if '=' in token:
+                    key, value = token.split('=', 1)
+                    current_key = key.strip()
+                    params[current_key] = value.strip()
+                else:
+                    # Support trailing values for id/ids lists: id=easy,medium,hard
+                    if current_key in ('id', 'ids'):
+                        existing = params.get(current_key, '')
+                        params[current_key] = (existing + ',' + token).strip(', ')
+                    else:
+                        log.warning(f"[QuizPlugin] Ignoring unrecognized token '{token}' in @include")
+
+            # Extract filename and IDs
+            filename = params.get('file', '')
+            if not filename:
+                error_msg = "Error: 'file' parameter is required in @include"
+                log.warning(f"[QuizPlugin] {error_msg}")
+                return f'<p style="color: red;">{error_msg}</p>'
+            
+            # Handle both 'id' and 'ids' parameters (comma-separated values)
+            id_value = params.get('id', params.get('ids', ''))
+            specified_ids = [s.strip() for s in id_value.split(',') if s.strip()] if id_value else []
+
             current_file_dir = os.path.dirname(page.file.abs_src_path)
             target_file_path = os.path.join(current_file_dir, filename)
 
@@ -226,11 +276,13 @@ class QuizPlugin(BasePlugin):
                 "id": quiz_meta.get("id"),
                 "layout": layout_mode,
                 "timer": quiz_meta.get("time_limit"),
+                "baseline": quiz_meta.get("required_score"),
                 "shuffle-questions": self._normalize_choice(quiz_meta.get("shuffle_questions"), allowed={"true", "false"}, default="false"),
                 "shuffle-answers": self._normalize_choice(quiz_meta.get("shuffle_answers"), allowed={"true", "false"}, default="true"),
                 "feedback-mode": self._normalize_choice(quiz_meta.get("feedback_mode"), allowed={"immediate", "end"}, default="end"),
                 "allow-skip": self._normalize_choice(quiz_meta.get("allow_skip"), allowed={"true", "false"}, default="true"),
                 "enable-survey": self._normalize_choice(quiz_meta.get("enable_survey"), allowed={"true", "false"}, default="false"),
+                "allow-back": quiz_meta.get("allow_back"),
             }
 
             data_attrs = " ".join(
@@ -245,7 +297,7 @@ class QuizPlugin(BasePlugin):
             html_output.append(f'<div class="quiz-container" markdown="1" {data_attrs}>')
             
             # Add the Start Screen
-            html_output.append(self._render_start_screen(quiz_meta))
+            html_output.append(self._render_start_screen(quiz_meta, total_questions=len(questions)))
             
             # Open the main wrapper (Hidden until the user presses Start)
             html_output.append('<div class="quiz-main-wrapper" style="display: none;">')
@@ -356,7 +408,7 @@ class QuizPlugin(BasePlugin):
                 item_raw_text = order_match.group(2).strip()
                 
                 # 1. Escape the text for security
-                item_html = html.escape(item_raw_text)
+                item_html = self._safe_math_escape(item_raw_text)
                 # 2. Re-insert images safely
                 if self.IMAGE_REGEX.search(item_raw_text):
                     for m in self.IMAGE_REGEX.finditer(item_raw_text):
@@ -375,7 +427,7 @@ class QuizPlugin(BasePlugin):
                 
                 ans_raw_text = ans_match.group(2).strip()
                 # 1. Escape for security
-                ans_html_text = html.escape(ans_raw_text)
+                ans_html_text = self._safe_math_escape(ans_raw_text)
                 # 2. Re-insert images safely
                 if self.IMAGE_REGEX.search(ans_raw_text):
                     for m in self.IMAGE_REGEX.finditer(ans_raw_text):
@@ -389,7 +441,7 @@ class QuizPlugin(BasePlugin):
 
         # question
         raw_question_body = " ".join(question_text_parts)
-        full_question_text = html.escape(raw_question_body)
+        full_question_text = self._safe_math_escape(raw_question_body)
         
         # Safely re-insert images into the escaped question body
         if self.IMAGE_REGEX.search(raw_question_body):
@@ -523,3 +575,13 @@ class QuizPlugin(BasePlugin):
                 .replace("'", '&#39;')
                 .replace('<', '&lt;')
                 .replace('>', '&gt;'))
+    
+    def _safe_math_escape(self, text):
+        """Escapes HTML but preserves backslashes for MathJax."""
+        if not text:
+            return ""
+            
+        # 1. Perform standard escape
+        escaped = html.escape(text)
+        # 2. Re-convert the double-escaped ampersands back to single backslashes 
+        return escaped.replace("&amp;\\", "\\").replace("&#x27;", "'")

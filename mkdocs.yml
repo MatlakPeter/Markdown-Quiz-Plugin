@@ -1,7 +1,8 @@
 site_name: Quiz Plugin
+
 plugins:
+    - search
     - quiz
 
 watch:
     - quiz_plugin
-

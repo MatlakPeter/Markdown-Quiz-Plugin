@@ -1,3 +1,19 @@
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+    },
+    chtml: {
+        scale: 1,
+        minScale: 0.6,
+        matchFontHeight: true
+    },
+    options: {
+        ignoreHtmlClass: 'tex2jax_ignore',
+        processHtmlClass: 'tex2jax_process'
+    }
+};
 /**
  * =============================================================================
  * SECTION 1: MAIN ENTRY POINT
@@ -16,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
  */
 function initializeQuiz(container) {
     // 1. Select Elements
-    const questions = container.querySelectorAll(".quiz-question-block");
+    let questions = container.querySelectorAll(".quiz-question-block");
     const nextBtn = container.querySelector(".quiz-nav-next");
     const prevBtn = container.querySelector(".quiz-nav-previous");
     const submitBtn = container.querySelector('.quiz-nav-submit');
@@ -25,6 +41,9 @@ function initializeQuiz(container) {
     const resultsDiv = container.querySelector(".quiz-results");
     const navContainer = container.querySelector(".quiz-navigation");
 
+    // Layout & Feedback Detection
+    const layout = container.getAttribute("data-layout") || "book";
+    const feedbackType = container.getAttribute("data-feedback-mode");
     const retakeBtn = container.querySelector(".quiz-btn-retake");
 
     // Timer specific elements
@@ -46,28 +65,30 @@ function initializeQuiz(container) {
     // --- NEW RANDOMIZATION STATE ---
     let questionOrder = []; // Stores the physical order of question indices [2, 0, 3, 1]
     const shouldShuffle = container.getAttribute("data-shuffle-questions") === "true";
-    // --- END NEW RANDOMIZATION STATE ---
+    const allow_back = container.getAttribute("data-allow-back") ? container.getAttribute("data-allow-back") === "true" : true;
 
+    if (shouldShuffle) {
+        questionOrder = shuffleQuestionOrder(container, questions);
+        questions = container.querySelectorAll(".quiz-question-block");
+    } else {
+        questionOrder = Array.from({ length: questions.length }, (_, i) => i);
+    }
     // =========================================================
     // SECTION: INTERNAL HELPER FUNCTIONS
     // =========================================================
 
-
-    // If the RETAKE BUTTON exists and is inside the results div, move it out 
-    // so it doesn't get deleted when we print the score.
     if (resultsDiv && retakeBtn && resultsDiv.contains(retakeBtn)) {
         const buttonWrapper = document.createElement("div");
         buttonWrapper.className = "quiz-retake-wrapper";
         buttonWrapper.style.textAlign = "center";
         buttonWrapper.style.marginTop = "20px";
-        
+
         // Insert the wrapper AFTER the results div
         resultsDiv.parentNode.insertBefore(buttonWrapper, resultsDiv.nextSibling);
-        
+
         // Move the button into the wrapper
         buttonWrapper.appendChild(retakeBtn);
     }
-
 
 
     function setupTimerDisplay() {
@@ -147,12 +168,12 @@ function initializeQuiz(container) {
         const progressPercent = ((currentIndex) / questions.length) * 100;
         progressBar.style.width = `${progressPercent}%`;
 
-        // Update Buttons visibility (no change, uses logical currentIndex)
-        prevBtn.style.display = currentIndex === 0 ? "none" : "inline-block";
-
-        const isLast = currentIndex === questions.length - 1;
-        nextBtn.style.display = isLast ? "none" : "inline-block";
-        submitBtn.style.display = isLast ? "inline-block" : "none";
+            prevBtn.style.display = currentIndex === 0 || allow_back === false ? "none" : "inline-block";
+            const isLast = currentIndex === questions.length - 1;
+            nextBtn.style.display = isLast ? "none" : "inline-block";
+            submitBtn.style.display = isLast ? "inline-block" : "none";
+        }
+        triggerMathJax();
     }
 
 
@@ -164,16 +185,15 @@ function initializeQuiz(container) {
             submitBtn.innerText = timeExpired ? "Time Expired" : "Submitted";
         }
 
-        if (retakeBtn) retakeBtn.style.display = "inline-block";
+        if (mainWrapper) {
+            const allQuestions = mainWrapper.querySelectorAll(".quiz-question-block");
+            allQuestions.forEach(q => q.style.display = "none");
 
-        // Hide the active question (using the actual physical index)
-        if (currentIndex >= 0 && currentIndex < questions.length) {
-            const currentActualIndex = questionOrder[currentIndex];
-            questions[currentActualIndex].style.display = "none";
+            if (navContainer) navContainer.style.display = "none";
+            if (timerDisplayContainer) timerDisplayContainer.style.display = "none";
         }
-        
-        if (navContainer) navContainer.style.display = "none";
-        if (progressBar) progressBar.style.width = "100%";
+
+        if (retakeBtn) retakeBtn.style.display = "inline-block";
 
         let timeTaken = null; 
         if (startTime !== null) {
@@ -187,77 +207,84 @@ function initializeQuiz(container) {
         
         if (resultsDiv) {
             resultsDiv.innerHTML = reportHTML;
-            resultsDiv.style.display = 'block';
+            resultsDiv.style.display = 'block'; // Force visibility
+            resultsDiv.scrollIntoView({ behavior: 'smooth' }); // Smooth scroll to the score
+            triggerMathJax();
+            container.classList.add("quiz-results-shown");
         }
     }
 
+    // --- EXECUTION ---
+
+    // 1. Setup individual questions
+    questions.forEach((q) => setupQuestion(q, feedbackType));
 
     function resetQuiz() {
-    // 1. Reset State Variables
-    currentIndex = 0;
-    timeLeft = isNaN(timeLimitSeconds) ? null : timeLimitSeconds;
-    
-    // 2. DOM Cleanup: Questions and Answers
-    questions.forEach(q => {
-        // Remove feedback messages and explanations
-        const feedback = q.querySelector('.quiz-feedback-msg');
-        if (feedback) feedback.remove();
-        
-        const explanation = q.querySelector('.quiz-explanation');
-        if (explanation) explanation.style.display = 'none';
+        // 1. Reset State Variables
+        currentIndex = 0;
+        timeLeft = isNaN(timeLimitSeconds) ? null : timeLimitSeconds;
 
-        // Reset Standard Buttons
-        q.querySelectorAll('.quiz-answer').forEach(btn => {
-            btn.disabled = false;
-            btn.classList.remove('selected', 'correct', 'incorrect', 'shouldbecorrect');
+        // 2. DOM Cleanup: Questions and Answers
+        questions.forEach(q => {
+            // Remove feedback messages and explanations
+            const feedback = q.querySelector('.quiz-feedback-msg');
+            if (feedback) feedback.remove();
+
+            const explanation = q.querySelector('.quiz-explanation');
+            if (explanation) explanation.style.display = 'none';
+
+            // Reset Standard Buttons
+            q.querySelectorAll('.quiz-answer').forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('selected', 'correct', 'incorrect', 'shouldbecorrect');
+            });
+
+            // Reset Dropdowns
+            const dropdown = q.querySelector('.quiz-dropdown');
+            if (dropdown) {
+                dropdown.disabled = false;
+                dropdown.selectedIndex = 0;
+                dropdown.style.border = "";
+                dropdown.style.backgroundColor = "";
+            }
+
+            // Reset Matching
+            if (q.dataset.type === 'matching') {
+                const solvedArea = q.querySelector('.quiz-match-solved-area');
+                if (solvedArea) solvedArea.innerHTML = '';
+                q.querySelectorAll('.quiz-match-item').forEach(item => {
+                    item.classList.remove('used', 'selected');
+                    item.style.display = '';
+                    item.style.pointerEvents = 'auto';
+                });
+            }
+
+            // Reset Ordering
+            if (q.dataset.type === 'ordering') {
+                q.querySelectorAll('.quiz-order-item').forEach(item => {
+                    item.style.border = "";
+                    item.style.backgroundColor = "";
+                    item.style.pointerEvents = 'auto';
+                });
+            }
+
+            // Reset Check Answer Buttons
+            const checkBtn = q.querySelector(".quiz-btn-check-answer");
+            if (checkBtn) {
+                checkBtn.disabled = false;
+            }
         });
 
-        // Reset Dropdowns
-        const dropdown = q.querySelector('.quiz-dropdown');
-        if (dropdown) {
-            dropdown.disabled = false;
-            dropdown.selectedIndex = 0;
-            dropdown.style.border = "";
-            dropdown.style.backgroundColor = "";
+        // 3. UI Toggle
+        if (resultsDiv) {
+            resultsDiv.style.display = 'none';
+            resultsDiv.innerHTML = '';
+        }
+        if (retakeBtn) {
+            retakeBtn.style.display = 'none';
         }
 
-        // Reset Matching
-        if (q.dataset.type === 'matching') {
-            const solvedArea = q.querySelector('.quiz-match-solved-area');
-            if (solvedArea) solvedArea.innerHTML = '';
-            q.querySelectorAll('.quiz-match-item').forEach(item => {
-                item.classList.remove('used', 'selected');
-                item.style.display = '';
-                item.style.pointerEvents = 'auto';
-            });
-        }
-
-        // Reset Ordering
-        if (q.dataset.type === 'ordering') {
-            q.querySelectorAll('.quiz-order-item').forEach(item => {
-                item.style.border = "";
-                item.style.backgroundColor = "";
-                item.style.pointerEvents = 'auto';
-            });
-        }
-        
-        // Reset Check Answer Buttons
-        const checkBtn = q.querySelector(".quiz-btn-check-answer");
-        if (checkBtn) {
-            checkBtn.disabled = false;
-        }
-    });
-
-    // 3. UI Toggle
-    if (resultsDiv) {
-        resultsDiv.style.display = 'none';
-        resultsDiv.innerHTML = '';
-    }
-    if (retakeBtn) {
-        retakeBtn.style.display = 'none';
-    }
-
-    // Restore Navigation & Submit Button ---
+        // Restore Navigation & Submit Button ---
         if (navContainer) {
             navContainer.style.display = "flex"; // Restores the container hidden by handleQuizSubmit
         }
@@ -266,19 +293,27 @@ function initializeQuiz(container) {
             submitBtn.innerText = "Submit"; // Reset text from "Submitted" or "Time Expired"
             submitBtn.style.display = "none"; // Hide initially (updateDisplay will show it if needed)
         }
-    
-    // 4. Return to Start or First Question
-    if (startScreen) {
-        startScreen.style.display = 'block';
-        mainWrapper.style.display = 'none';
-    } else {
-        updateDisplay();
+
+        // 4. Return to Start or First Question
+        if (startScreen) {
+            startScreen.style.display = 'block';
+            mainWrapper.style.display = 'none';
+        } else {
+            updateDisplay();
+        }
+
+        // 5. Reset Progress Bar
+        if (progressBar) progressBar.style.width = "0%";
+
+        // 6. Optional: Reshuffle if configured
+        if (shouldShuffle) {
+            questionOrder = shuffleQuestionOrder(container, questions);
+            // If we reshuffle, we must call updateDisplay again to show the new Q1
+            if (!startScreen) updateDisplay();
+        }
     }
-    
-    // 5. Reset Progress Bar
-    if (progressBar) progressBar.style.width = "0%";
-    
-   // 6. Optional: Reshuffle if configured
+
+    // 2. Handle Shuffle
     if (shouldShuffle) {
         questionOrder = shuffleQuestionOrder(container, questions);
         // If we reshuffle, we must call updateDisplay again to show the new Q1
@@ -314,27 +349,10 @@ function initializeQuiz(container) {
         updateDisplay();
     }
 
-    // 5. Bind Navigation Events
-    if (nextBtn) {
-        nextBtn.addEventListener("click", () => {
-            if (currentIndex < questions.length - 1) {
-                changeQuestion(1);
-            }
-        });
-    }
-
-    if (prevBtn) {
-        prevBtn.addEventListener("click", () => {
-            if (currentIndex > 0) {
-                changeQuestion(-1);
-            }
-        });
-    }
-
-    if (submitBtn) {
-        submitBtn.addEventListener('click', () => handleQuizSubmit(false));
-    }
-
+    // 4. Bind Nav
+    if (nextBtn) nextBtn.addEventListener("click", () => changeQuestion(1));
+    if (prevBtn) prevBtn.addEventListener("click", () => changeQuestion(-1));
+    if (submitBtn) submitBtn.addEventListener('click', () => handleQuizSubmit(false));
     if (retakeBtn) {
         retakeBtn.addEventListener("click", () => resetQuiz());
     }
@@ -377,6 +395,143 @@ function setupQuestion(questionBlock) {
     }
 }
 
+function handleCheckButton(btn, questionBlock) {
+    btn.disabled = true;
+    const type = questionBlock.dataset.type;
+    const quizFeedback = questionBlock.querySelector('.quiz-feedback-content')
+    if (quizFeedback)
+        quizFeedback.style.display = "block"
+    let isCorrect = false;
+    let feedbackText = "";
+
+    // single , multiple
+    if (type === "single" || type === "multiple") {
+        const allAnswers = questionBlock.querySelectorAll(".quiz-answer")
+        const userSelected = Array.from(allAnswers).filter(a => a.classList.contains("selected"));
+        const correctAnswers = Array.from(allAnswers).filter(a => a.dataset.correct === 'true');
+
+        isCorrect = (userSelected.length === correctAnswers.length) &&
+            userSelected.every(a => a.dataset.correct === 'true')
+
+        allAnswers.forEach(a => {
+            a.disabled = true
+            if (a.classList.contains('selected')) {
+                a.classList.add(a.dataset.correct === 'true' ? 'correct' : 'incorrect')
+            }
+            else if (a.dataset.correct === 'true') {
+                a.classList.add('shouldbecorrect');
+            }
+        })
+    }
+
+    // dropdown
+    else if (type === 'dropdown') {
+        const dropdown = questionBlock.querySelector('.quiz-dropdown')
+        dropdown.disabled = true
+        let selectedOption, correctAnswerDisplay;
+        ({ isCorrect, selectedOption, correctAnswerDisplay } = reportDropdown(questionBlock, questionBlock.dataset.questionIndex, false))
+
+
+        if (selectedOption.dataset.correct === 'true') {
+            dropdown.style.border = "2px solid #1e7e34";
+            dropdown.style.backgroundColor = "#28a745";
+        }
+        else {
+            dropdown.style.border = "2px solid #b02a37";
+            dropdown.style.backgroundColor = "#dc3545";
+            feedbackText = `Correct Answer: <strong>${correctAnswerDisplay}</strong>`;
+        }
+
+    }
+    // ordering
+    else if (type === 'ordering') {
+        const items = Array.from(questionBlock.querySelectorAll('.quiz-order-item'))
+        let correctOrder;
+        items.forEach((item, pos) => {
+            item.style.pointerEvents = 'none';
+
+            if (Number(item.dataset.correctOrder) === pos + 1) {
+                item.style.backgroundColor = "#28a745";
+                item.style.border = "2px solid #1e7e34";
+            } else {
+                item.style.border = "2px solid #b02a37";
+                item.style.backgroundColor = "#dc3545";
+            }
+        });
+        ({ isCorrect, correctOrder } = reportOrdering(questionBlock, questionBlock.dataset.questionIndex, false))
+        if (!isCorrect) {
+            feedbackText = `Correct answers: ${correctOrder}`
+        }
+    }
+    // matching
+    else if (type === 'matching') {
+        const solvedArea = questionBlock.querySelector('.quiz-match-solved-area')
+        const userPairs = Array.from(solvedArea.querySelectorAll('.quiz-match-pair'));
+        let correctPairs = ""
+        userPairs.forEach(pair => {
+            pair.style.pointerEvents = 'none';
+
+            if (pair.dataset.pairId === pair.dataset.userRight) {
+                pair.classList.add('correct');
+            } else {
+                pair.classList.add('incorrect');
+            }
+        })
+        const remainingItems = questionBlock.querySelectorAll('.quiz-match-item');
+        remainingItems.forEach(i => i.style.pointerEvents = 'none');
+
+        ({ isCorrect, correctPairs } = reportMatching(questionBlock, questionBlock.dataset.questionIndex, false))
+        if (!isCorrect) {
+            feedbackText = `Correct answer: ${correctPairs}`
+        }
+    }
+
+    // feedback
+    feedbackMsg = document.createElement('div');
+    feedbackMsg.className = 'quiz-feedback-msg';
+    questionBlock.appendChild(feedbackMsg);
+
+    if (isCorrect) {
+        feedbackMsg.innerHTML = "<strong>Correct!</strong>";
+        feedbackMsg.style.backgroundColor = "#d4edda";
+        feedbackMsg.style.color = "#28a745";
+        feedbackMsg.style.border = "1px solid #c3e6cb";
+    } else {
+        feedbackMsg.innerHTML = `<strong>Incorrect.</strong> <br>${feedbackText}`;
+        feedbackMsg.style.backgroundColor = "#f8d7da";
+        feedbackMsg.style.color = "#dc3545";
+        feedbackMsg.style.border = "1px solid #f5c6cb";
+    }
+
+    //added for explanations
+    const explanationDiv = questionBlock.querySelector('.quiz-explanation');
+
+    if (explanationDiv) {
+        const markdownContent = explanationDiv.getAttribute('data-explanation-markdown');
+
+        if (markdownContent) {
+            const decoded = decodeHTMLEntities(markdownContent);
+            const rendered = renderMarkdownToHTML(decoded);
+
+            explanationDiv.innerHTML = `
+                <div style="margin-top: 15px; padding: 12px; background-color: #e8f4f8; border-left: 4px solid #2196F3; border-radius: 4px;">
+                    <strong style="color: #1976D2;">Explanation:</strong>
+                    <div style="margin-top: 8px; color: #333;">
+                        ${rendered}
+                    </div>
+                </div>
+            `;
+
+            // Show the div
+            explanationDiv.style.display = 'block';
+
+            // Smoothly nudge the screen so the user sees the explanation
+            explanationDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+    triggerMathJax();
+
+}
 function handleSelection(clickedButton, type, allButtons) {
     const isSelected = clickedButton.classList.contains("selected");
 
@@ -577,13 +732,10 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
         timeTakenDisplay = formatTime(timeTakenSeconds);
     }
 
-    questionOrder.forEach((actualIndex, displayIndex) => {
-        const q = questions[actualIndex]; 
-        
+    questions.forEach((q, displayIndex) => {
         let result;
         const type = q.dataset.type;
 
-        // Note: The index passed here is displayIndex, which correctly numbers the report 1, 2, 3...
         if (type === "ordering") {
             result = reportOrdering(q, displayIndex);
         } else if (type === "dropdown") {
@@ -597,7 +749,30 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
         questionsHTML += result.html;
         if (result.isCorrect) totalScore++;
     });
-  
+
+    let comparisonHtml = ""; 
+    const baselineStr = container.getAttribute("data-baseline"); // Get the baseline from HTML
+    
+    if (baselineStr) {
+        const baseline = parseFloat(baselineStr);
+        // Added: Need total questions count to display "out of X" in requirements
+        const maxScore = questions.length; 
+        
+        if (!isNaN(baseline)) {
+            const hasPassed = totalScore >= baseline;
+            const statusText = hasPassed ? "PASSED" : "FAILED";
+            // Change: Use simple text colors instead of banner classes
+            const color = hasPassed ? "green" : "red";
+
+            // Change: Generate simple paragraph HTML instead of the styled div banner
+            comparisonHtml = `
+                <p style="font-weight: bold; color: ${color}; margin-bottom: 15px;">
+                    Result: ${statusText} <br>
+                </p>
+            `;
+        }
+    }
+
     const timeHtml = displayTime
         ? `<p style="font-size: 1em; margin-bottom: 20px;"> 
                Time Taken: <strong>${timeTakenDisplay}</strong>
@@ -608,6 +783,7 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
         <div style="padding: 20px; background-color: #f8f9fa; border-top: 2px solid #333; margin-top: 20px;">
             <h3 style="margin-top: 0;">Quiz Results</h3>
             <p style="font-size: 1.2em; margin-bottom: 5px;">
+            ${comparisonHtml} 
                 You scored <strong>${totalScore}</strong> out of <strong>${questions.length}</strong>
             </p>
             ${timeHtml}
@@ -631,9 +807,23 @@ function reportQuestion(questionElement, index) {
         if (btn.dataset.correct === "false") isCorrect = false;
     });
 
-    const formatList = (btns) => btns.map(b => b.innerHTML).join(', ') || '<em>None</em>';
+    const formatReportIcons = (btns) => {
+        if (btns.length === 0) return '<em>None</em>';
+        return `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">` +
+            btns.map(b => `<span class="report-answer-item">${b.innerHTML}</span>`).join("") +
+            `</div>`;
+    };
 
-    return createReportCard(index, questionText, isCorrect, formatList(userSelected), formatList(correctAnswers));
+    const explanationHTML = extractExplanationHTML(questionElement);
+
+    return createReportCard(
+        index,
+        questionText,
+        isCorrect,
+        formatReportIcons(userSelected),
+        formatReportIcons(correctAnswers),
+        explanationHTML
+    );
 }
 
 function reportDropdown(questionBlock, index) {
@@ -679,14 +869,23 @@ function reportOrdering(questionElement, index) {
 
     const isCorrect = items.every((item, pos) => Number(item.dataset.correctOrder) === pos + 1);
 
-    const userOrder = items.map(i => i.innerHTML).join(", ");
+    const userOrder = `<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;">` +
+        items.map(item => `<span class="report-order-item">${item.innerHTML}</span>`).join("") +
+        `</div>`;
 
-    const correctOrder = items.slice()
-        .sort((a, b) => Number(a.dataset.correctOrder) - Number(b.dataset.correctOrder))
-        .map(i => i.innerText)
-        .join(", ");
+    const correctOrder = `<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;">` +
+        items.slice()
+            .sort((a, b) => Number(a.dataset.correctOrder) - Number(b.dataset.correctOrder))
+            .map(item => `<span class="report-order-item">${item.innerHTML}</span>`)
+            .join("") +
+        `</div>`;
 
-    return createReportCard(index, questionText, isCorrect, userOrder, correctOrder);
+    if (feedbackEnd)
+        return createReportCard(index, questionText, isCorrect, userOrder, correctOrder);
+    return {
+        isCorrect,
+        correctOrder: correctOrder
+    }
 }
 
 // ---------- reporting for matching ----------
@@ -702,11 +901,11 @@ function reportMatching(questionBlock, index) {
     const rightLabel = {};
 
     leftItems.forEach(item => {
-        leftLabel[item.dataset.pairId] = item.textContent.trim();
+        leftLabel[item.dataset.pairId] = item.innerHTML.trim();
     });
 
     rightItems.forEach(item => {
-        rightLabel[item.dataset.pairId] = item.textContent.trim();
+        rightLabel[item.dataset.pairId] = item.innerHTML.trim();
     });
 
     // User pairs
@@ -729,14 +928,100 @@ function reportMatching(questionBlock, index) {
         userPairs.length === correctPairs.length &&
         userPairs.every(up => up.left === up.right);
 
-    return createReportCard(
-        index,
-        questionText,
+    const explanationHTML = extractExplanationHTML(questionBlock);
+
+    if (feedbackEnd)
+        return createReportCard(
+            index,
+            questionText,
+            isCorrect,
+            userPairs.map(p => `<div>${p.label}</div>`).join("") || "<em>None</em>",
+            correctPairs.map(p => `<div>${p.label}</div>`).join(""),
+            explanationHTML
+        );
+    return {
         isCorrect,
-        userPairs.map(p => p.label).join(", ") || "<em>None</em>",
-        correctPairs.map(p => p.label).join(", ")
-    );
+        correctPairs: correctPairs.map(p => p.label).join(", "),
+        explanationHTML: explanationHTML
+    }
 }
+
+// EXTRACT AND RENDER EXPLANATION FROM QUESTION BLOCK ---
+/**
+ * Extracts explanation content from a question block and returns rendered HTML.
+ * The explanation is stored in a hidden div with a data-explanation-markdown attribute.
+ * This function retrieves the markdown content and renders it as HTML with proper formatting.
+ * 
+ * @param {HTMLElement} questionElement - The question block element
+ * @returns {string} - HTML string containing the formatted explanation, or empty string if none exists
+ */
+function extractExplanationHTML(questionElement) {
+    const explanationDiv = questionElement.querySelector('.quiz-explanation');
+
+    if (!explanationDiv) {
+        return '';
+    }
+
+    // Get the markdown content from the data attribute
+    const markdownContent = explanationDiv.getAttribute('data-explanation-markdown');
+
+    if (!markdownContent) {
+        return '';
+    }
+
+    // Decode HTML entities
+    const decodedContent = decodeHTMLEntities(markdownContent);
+
+    // Render markdown to HTML (preserve links, formatting, etc.)
+    const renderedHTML = renderMarkdownToHTML(decodedContent);
+
+    return `
+        <div style="margin-top: 15px; padding: 12px; background-color: #e8f4f8; border-left: 4px solid #2196F3; border-radius: 4px;">
+            <strong style="color: #1976D2;">Explanation:</strong>
+            <div style="margin-top: 8px; color: #333;">
+                ${renderedHTML}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Decodes HTML entities in a string.
+ * Used to decode explanation content stored in data attributes.
+ * 
+ * @param {string} text - The text with HTML entities
+ * @returns {string} - The decoded text
+ */
+function decodeHTMLEntities(text) {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = text;
+    return textarea.value;
+}
+
+/**
+ * Renders simple markdown to HTML.
+ * Supports:
+ * - Inline links: [text](url)
+ * - Basic formatting (preserved as-is since it's already in HTML context)
+ * 
+ * This is a lightweight markdown renderer that preserves standard markdown links
+ * and converts them to clickable HTML anchors.
+ * 
+ * @param {string} markdown - The markdown text
+ * @returns {string} - The rendered HTML
+ */
+function renderMarkdownToHTML(markdown) {
+    // Convert markdown links [text](url) to HTML <a> tags
+    // This regex matches standard markdown link syntax
+    let html = markdown.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+        // Preserve the link exactly as written
+        return `<a href="${url}" style="color: #1976D2; text-decoration: underline;">${text}</a>`;
+    });
+
+    return html;
+}
+
+
 
 // Reusable HTML generator for reports
 function createReportCard(index, questionText, isCorrect, userAns, correctAns) {
@@ -832,4 +1117,11 @@ function shuffleQuestionOrder(container, questions) {
     
     // Return the new logical order
     return indices;
+}
+
+// for LaTeX math
+function triggerMathJax() {
+    if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise();
+    }
 }
