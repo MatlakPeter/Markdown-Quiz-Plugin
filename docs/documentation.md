@@ -109,6 +109,20 @@ Random text. %reference_label% The explanation starts with this sentence. And th
 The quiz supports several types of questions:
 
 *   **Single Choice:** The user can select only one correct answer.
+
+@START
+@title: My Documentation Quiz
+
+---
+
+What is the command to install mkdocs?
+[] pip install mkdocs-quiz-plugin
+[x] pip install mkdocs
+[] pip install python
+
+@END
+
+
 *   **Multiple Choice:** The user can select multiple correct answers.
 *   **Dropdown:** The user selects the correct answer from a dropdown menu.
 *   **Ordering:** The user must arrange items in the correct order.
