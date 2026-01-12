@@ -282,7 +282,6 @@ function initializeQuiz(container) {
                 dropdown.style.backgroundColor = "";
             }
 
-            // 2. Handle Shuffle
             // Reset Matching
             if (q.dataset.type === 'matching') {
                 const solvedArea = q.querySelector('.quiz-match-solved-area');
@@ -346,26 +345,14 @@ function initializeQuiz(container) {
             // If we reshuffle, we must call updateDisplay again to show the new Q1
             if (!startScreen) updateDisplay();
         }
-
     }
 
-    // =========================================================
-    // END OF INTERNAL HELPER FUNCTIONS
-    // =========================================================
-
-
-    // 3. Setup Questions (Shuffle answers, init dropdowns)
-    questions.forEach(setupQuestion);
-
-    // --- NEW RANDOMIZATION EXECUTION ---
+    // 2. Handle Shuffle
     if (shouldShuffle) {
-        // Calls the new global utility function
         questionOrder = shuffleQuestionOrder(container, questions);
     } else {
-        // Keep original order: [0, 1, 2, 3, ...]
         questionOrder = Array.from({ length: questions.length }, (_, i) => i);
     }
-
 
     // 3. Init Display
     setupTimerDisplay();

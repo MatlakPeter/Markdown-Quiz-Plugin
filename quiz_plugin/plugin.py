@@ -298,7 +298,6 @@ class QuizPlugin(BasePlugin):
                 </div>
             ''')
 
-
             # Close the quiz-main-wrapper
             html_output.append('</div>') 
             
