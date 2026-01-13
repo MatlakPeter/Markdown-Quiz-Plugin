@@ -514,9 +514,9 @@ function handleCheckButton(btn, questionBlock) {
             const rendered = renderMarkdownToHTML(decoded);
 
             explanationDiv.innerHTML = `
-                <div style="margin-top: 15px; padding: 12px; background-color: #e8f4f8; border-left: 4px solid #2196F3; border-radius: 4px;">
-                    <strong style="color: #1976D2;">Explanation:</strong>
-                    <div style="margin-top: 8px; color: #333;">
+                <div class="quiz-explanation-box">
+                    <strong class="quiz-explanation-header">Explanation:</strong>
+                    <div class="quiz-explanation-text">
                         ${rendered}
                     </div>
                 </div>
@@ -750,14 +750,14 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
         if (result.isCorrect) totalScore++;
     });
 
-    let comparisonHtml = ""; 
+    let comparisonHtml = "";
     const baselineStr = container.getAttribute("data-baseline"); // Get the baseline from HTML
-    
+
     if (baselineStr) {
         const baseline = parseFloat(baselineStr);
         // Added: Need total questions count to display "out of X" in requirements
-        const maxScore = questions.length; 
-        
+        const maxScore = questions.length;
+
         if (!isNaN(baseline)) {
             const hasPassed = totalScore >= baseline;
             const statusText = hasPassed ? "PASSED" : "FAILED";
@@ -768,6 +768,9 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
             comparisonHtml = `
                 <p style="font-weight: bold; color: ${color}; margin-bottom: 15px;">
                     Result: ${statusText} <br>
+                    <span style="font-weight: normal; color: var(--quiz-text-desc);">
+                        You scored <strong>${totalScore}</strong> out of <strong>${questions.length}</strong> | Required: <strong>${baseline}</strong> out of <strong>${maxScore}</strong>
+                    </span>
                 </p>
             `;
         }
@@ -784,7 +787,7 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
             <h3 style="margin-top: 0;">Quiz Results</h3>
             <p style="font-size: 1.2em; margin-bottom: 5px;">
             ${comparisonHtml} 
-                You scored <strong>${totalScore}</strong> out of <strong>${questions.length}</strong>
+                
             </p>
             ${timeHtml}
             <div class="quiz-review-list">
@@ -976,9 +979,9 @@ function extractExplanationHTML(questionElement) {
     const renderedHTML = renderMarkdownToHTML(decodedContent);
 
     return `
-        <div style="margin-top: 15px; padding: 12px; background-color: #e8f4f8; border-left: 4px solid #2196F3; border-radius: 4px;">
-            <strong style="color: #1976D2;">Explanation:</strong>
-            <div style="margin-top: 8px; color: #333;">
+        <div class="quiz-explanation-box">
+            <strong class="quiz-explanation-title">Explanation:</strong>
+            <div class="quiz-explanation-content">
                 ${renderedHTML}
             </div>
         </div>
