@@ -8,7 +8,7 @@
     --quiz-bg-page: var(--md-code-bg-color, #f8f9fb);
     --quiz-bg-main: var(--md-default-bg-color, #ffffff);
     /* Adding a default value here ensures buttons aren't transparent in basic themes */
-    --quiz-bg-card: var(--md-default-bg-color--light, #f0f4f8); 
+    --quiz-bg-card: var(--md-default-bg-color--light, #ffffff);
 
     /* Typography */
     --quiz-text-title: var(--md-primary-fg-color, #3066ae);
@@ -35,6 +35,8 @@
 
     --quiz-nav-bg: var(--md-primary-fg-color--dark, #1a4a8d);
     --quiz-nav-border: var(--md-primary-fg-color--dark, #153e77);
+    --quiz-report-correct: #28a745;
+    --quiz-report-incorrect: #dc3545;
 }
 
 /* Dark Mode Overrides - Slate */
@@ -50,7 +52,8 @@
     --quiz-text-question: var(--md-typeset-color, #f8f9fa);
     --quiz-text-interactive: var(--md-accent-fg-color, #93b9ef);
     --quiz-text-status: var(--md-primary-fg-color--light, #93b9ef);
-    --quiz-text-timer: var(--md-typeset-color, #ffffff);
+    --quiz-text-timer: var(--quiz-text-status);
+    --quiz-dropdown-text: #ffffff;
 
     /* Interactive & Feedback */
     --quiz-border: var(--md-primary-fg-color--light, #5a6b89);
@@ -67,6 +70,9 @@
 
     --quiz-shadow: rgba(0, 0, 0, 0.6);
     --quiz-bg-report-card: var(--md-default-bg-color, #24242e);
+
+    --quiz-report-correct: #81c784; 
+    --quiz-report-incorrect: #e57373;
 }
 
 /* html, body {
@@ -144,9 +150,9 @@
 }
 
 .quiz-btn-start:hover {
-    background-color: var(--quiz-btn-primary); 
-    border-color: var(--quiz-btn-primary); 
-    color: #ffffff; 
+    background-color: var(--quiz-btn-primary);
+    border-color: var(--quiz-btn-primary);
+    color: #ffffff;
 }
 
 .quiz-btn-start:active {
@@ -166,9 +172,9 @@
 }
 
 .quiz-btn-retake:hover {
-    background-color: var(--quiz-btn-primary); 
-    border-color: var(--quiz-btn-primary); 
-    color: #ffffff; 
+    background-color: var(--quiz-btn-primary);
+    border-color: var(--quiz-btn-primary);
+    color: #ffffff;
 }
 
 /* quiz container */
@@ -242,7 +248,7 @@
     /* border: 1px solid var(--quiz-border); */
     border: 1px solid var(--quiz-text-interactive);
     border-radius: 8px;
-    /* background: var(--quiz-bg-card); */
+    background: var(--quiz-bg-card);
     color: var(--quiz-text-interactive);
     cursor: pointer;
     font-family: inherit;
@@ -255,20 +261,20 @@
 }
 
 /* darker blue on hover */
-.quiz-answer:hover, 
-.quiz-order-item:hover, 
-.quiz-match-item:hover, 
+.quiz-answer:hover,
+.quiz-order-item:hover,
+.quiz-match-item:hover,
 .quiz-match-pair:hover,
 .quiz-dropdown:hover {
-    background-color: var(--quiz-text-interactive) !important; 
-    border-color: var(--quiz-text-interactive) !important; 
+    background-color: var(--quiz-text-interactive) !important;
+    border-color: var(--quiz-text-interactive) !important;
     color: #ffffff !important;
 }
 
 .quiz-answer.selected,
 .quiz-match-item.selected {
-    background-color: var(--quiz-text-interactive) !important;
-    border-color: var(--quiz-text-interactive) !important;
+    background-color: var(--quiz-text-interactive);
+    border-color: var(--quiz-text-interactive);
     color: #ffffff !important;
 }
 
@@ -309,8 +315,8 @@
 
 /* dropdown hover effect */
 .quiz-dropdown:hover {
-    background-color: var(--quiz-text-interactive) !important; 
-    border-color: var(--quiz-text-interactive) !important; 
+    background-color: var(--quiz-text-interactive) !important;
+    border-color: var(--quiz-text-interactive) !important;
     color: #ffffff !important;
 }
 
@@ -364,17 +370,12 @@
 /* Matching question styling */
 .quiz-matching-container {
     display: flex;
-    /* flex container */
     flex-direction: row;
-    /* horizontal layout */
     justify-content: center;
-    /* center the two columns horizontally */
-    gap: 40px;
-    /* space between left & right columns */
+    gap: 20px;
+    width: 100%;
     max-width: 600px;
-    /* overall container max width */
     margin: 0 auto 20px auto;
-    /*center container horizontally*/
 }
 
 .quiz-match-item,
@@ -402,10 +403,29 @@
     /* spacing between buttons */
 }
 
+.quiz-match-left,
+.quiz-match-right {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;/
+}
+
+.quiz-match-item {
+    width: 100%;
+    margin: 0;
+    padding: 10px 15px;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
 .quiz-match-item:hover,
 .quiz-match-pair:hover {
-     background-color: var(--quiz-text-interactive) !important; 
-    border-color: var(--quiz-text-interactive) !important; 
+    background-color: var(--quiz-text-interactive) !important;
+    border-color: var(--quiz-text-interactive) !important;
     color: #ffffff !important;
 }
 
@@ -439,8 +459,8 @@
 
 /* Hover effect like buttons */
 .quiz-order-item:hover {
-    background-color: var(--quiz-text-interactive) !important; 
-    border-color: var(--quiz-text-interactive) !important; 
+    background-color: var(--quiz-text-interactive) !important;
+    border-color: var(--quiz-text-interactive) !important;
     color: #ffffff !important;
 }
 
@@ -571,11 +591,35 @@
     margin-bottom: 18px;
 }
 
-/* progress text */
+
+.quiz-main-wrapper {
+    position: relative;
+    padding-top: 65px !important;
+}
+
+.quiz-timer-display,
 .quiz-status-text {
-    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    font-size: 16px;
+    position: absolute;
+    top: 20px;
+    margin: 0;
+    z-index: 10;
+    font-weight: 400;
+    font-size: 0.9rem;
     color: var(--quiz-text-status);
+    font-family: inherit;
+}
+
+.quiz-timer-display {
+    left: 20px;
+}
+
+.quiz-status-text {
+    right: 25px;
+}
+
+.quiz-progress-container {
+    margin-top: 0;
+    margin-bottom: 25px;
 }
 
 /* progress bar */
@@ -684,9 +728,9 @@
 }
 
 .quiz-btn-retake:hover {
-    background-color: var(--quiz-btn-primary); 
-    border-color: var(--quiz-btn-primary); 
-    color: #ffffff; 
+    background-color: var(--quiz-btn-primary);
+    border-color: var(--quiz-btn-primary);
+    color: #ffffff;
 }
 
 /* --- New: Passing Score Styles (Epic #110) --- */
@@ -704,6 +748,26 @@
     border-left: 4px solid #dc3545;
 }
 
+/* Base Report Card Styles */
+.quiz-report-card {
+    margin-bottom: 15px;
+    padding: 15px;
+    border: 1px solid var(--quiz-border, #ccc);
+    border-radius: 5px;
+    background: #fff;
+    /* Light mode default */
+    color: #333;
+}
+
+.quiz-report-question {
+    margin: 0 0 10px 0;
+    font-weight: bold;
+}
+
+.quiz-report-details {
+    font-size: 0.95em;
+    color: #555;
+}
 
 /* =============================================================================
    SECTION 7: RESPONSIVENESS & RESULTS
@@ -803,7 +867,12 @@
 
 [data-md-color-scheme="slate"] .quiz-timer-display {
     color: var(--quiz-text-timer);
-    font-weight: bold;
+    font-weight: 400;
+}
+
+[data-md-color-scheme="slate"] .quiz-dropdown,
+[data-md-color-scheme="slate"] .quiz-dropdown option {
+    color: var(--quiz-dropdown-text) !important;
 }
 
 /* Standard (Light) Mode */
