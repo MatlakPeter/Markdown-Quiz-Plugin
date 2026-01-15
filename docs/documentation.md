@@ -35,7 +35,14 @@ pip install mkdocs
     pip install -i https://test.pypi.org/simple/ mkdocs-quiz-plugin
     ```
 
-2.  **Enable the plugin**
+2.  **Create a new project**
+
+    In the IDE terminal, automatically create a new project using the command:
+    ```
+    mkdocs new ProjectName
+    ```
+
+3.  **Enable the plugin**
 
     Add the plugin to your `mkdocs.yml` file. This enables the plugin for your project:
     ```yaml
@@ -43,23 +50,32 @@ pip install mkdocs
       - quiz
     ```
 
-3.  **Start writing quizzes**
+
+4.  **Start writing quizzes**
 
     You can now start adding quiz blocks to your Markdown files.
 
-4.  **Preview your site**
+5.  **Preview your site**
 
     Use the `mkdocs serve` command to start the live-reloading server and see your quizzes rendered in real-time:
     ```bash
     mkdocs serve
     ```
 
-### Writing your first quizz
+### Writing your first quiz
+
+
+**Important notes**
+>* The following keywords can be used to control the behavior of the quiz.
+>* The only mandatory tags for a quiz to exist are @START and @END. 
+>* The [x] marks a correct answer.
+>* Sepparation between questions in a quiz is made by adding  ``` --- ```
+
+<br>
+<br>
 
 **Key words defining Quiz Behaviour**
 
->* The following keywords can be used to control the behavior of the quiz.
->* The only mandatory tags for a quiz to exist are @START and @END. 
 
 | Keyword                 | Description                                                                                             | Default / Behavior                                |
 | ----------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
@@ -76,6 +92,11 @@ pip install mkdocs
 | `@explanation: <text>`  | Provides context for the correct answer during feedback.                                                | N/A                                               |
 
 
+>* NOTE: ``` @explanation ``` is the only parameter that is applied individually to each question. The rest are global.
+
+<br>
+<br>
+
 **Quiz Types**
 
 The quiz supports several types of questions:
@@ -85,7 +106,19 @@ The quiz supports several types of questions:
 
 === "Code"
 
-    ![Single Choice code](../screenshots/singleChoice.png)
+    ```
+    ‎@START
+    @title: Single Choice Quiz
+
+    What is the command to install mkdocs?
+
+    [] pip install mkdocs-quiz-plugin
+    [x] pip install mkdocs
+    [] pip install python
+
+    @END
+    ```
+
 
 === "Rendered Quiz"
 
@@ -100,16 +133,30 @@ The quiz supports several types of questions:
     @END
 
 
+<br>
+
 *   **Multiple Choice:** The user can select multiple correct answers.
 
 === "Code"
 
-    ![Single Choice code](../screenshots/multipleChoice.png)
+    ```
+    ‎@START
+    @title: Multiple Choice Quiz
+
+    Which are the challanges in modern learning?
+    [] Poorly structured materials
+    [x] Passive reading
+    [] No feedback possibility
+    [x] Lack of interactive content
+
+    @END
+    ```
 
 === "Rendered Quiz"
 
 @START
 @title: Multiple Choice Quiz
+
 Which are the challanges in modern learning?
 [] Poorly structured materials
 [x] Passive reading
@@ -118,6 +165,7 @@ Which are the challanges in modern learning?
 
 @END
 
+<br>
 
 *   **Dropdown:** The user selects the correct answer from a dropdown menu.
 
@@ -125,7 +173,14 @@ Which are the challanges in modern learning?
 
 === "Code"
 
-    ![Single Choice code](../screenshots/dropdown.png)
+    ```
+    ‎@START
+    @title: Dropdown Quiz
+
+    The octopus has {{3|1|4|8}} hearts.
+
+    @END
+    ```
 
 === "Rendered Quiz"
 
@@ -134,57 +189,90 @@ Which are the challanges in modern learning?
 The octopus has {{3|1|4|8}} hearts.
 @END
 
+<br>
+
 *   **Ordering:** The user must arrange items in the correct order.
 
 === "Code"
 
-    ![Single Choice code](../screenshots/ordering.png)
+    ```
+    ‎@START
+    @title: Correct Order Quiz
+
+    (1.) Crack two fresh eggs into a small bowl and whisk them.
+    (2.) Place a skillet over medium-low heat and add a knob of butter.
+    (3.) Pour the whisked egg mixture into the center of the pan.
+    (4.) Gently push the eggs across the skillet with a spatula to form soft curds.
+    (5.) Remove the pan from the heat while the eggs are still slightly soft and moist.
+
+    @END
+    ```
 
 === "Rendered Quiz"
 
 @START
 @title: Correct Order Quiz
+
 (1.) Crack two fresh eggs into a small bowl and whisk them.
-
 (2.) Place a skillet over medium-low heat and add a knob of butter.
-
 (3.) Pour the whisked egg mixture into the center of the pan.
-
 (4.) Gently push the eggs across the skillet with a spatula to form soft curds.
-
 (5.) Remove the pan from the heat while the eggs are still slightly soft and moist.
+
 @END
+
+<br>
 
 *   **Matching:** The user must match items from two lists.
 
 === "Code"
+    ```
+    ‎@START
+    @title: Matching Quiz
 
-    ![Single Choice code](../screenshots/matching.png)
+    Match the painter with the artwork:
+
+    {Leonardo da Vinci | Mona Lisa}
+    {Vincent van Gogh | The Starry Night}
+    {Pablo Picasso | Guernica}
+    {Frida Kahlo | The Two Fridas}
+
+    @END
+    ```
 
 === "Rendered Quiz"
 
 @START
 @title: Matching Quiz
 
-Match the painter with the artwork
+Match the painter with the artwork:
 
 {Leonardo da Vinci | Mona Lisa}
-
 {Vincent van Gogh | The Starry Night}
-
 {Pablo Picasso | Guernica}
-
 {Frida Kahlo | The Two Fridas}
 
 @END
+
+<br>
 
 *   **Picture Questions:** Questions that include images.
 
 >* NOTE: One can add an url link from an online picture or the relative path to a subfolder of "docs" for local images (../subfolder/image.png)
 
 === "Code"
+    ```
+    ‎@START
+    @title: Picture Quiz
 
-    ![Single Choice code](../screenshots/pictureQuiz.png)
+    Identify the object shown below:
+    ![SomePicture](https://lafeber.com/vet/wp-content/uploads/european-rabbit.jpg)
+    [x] Rabbit
+    [] Horse
+    [] Cat
+
+    @END
+    ```
 
 === "Rendered Quiz"
 
@@ -223,6 +311,9 @@ Which of the following is not a position in football/soccer?
 
 @END
 
+<br>
+<br>
+
 **Referencing Lecture Material**
 
 >* Questions can link directly to lecture notes
@@ -259,6 +350,8 @@ Headings automatically create anchors. Anchors are in lowercase letters and dash
     See the football positions [here](lecture_notes.md#football-positions)
     ```
 
+<br>
+
 **Reference to Non-Heading Content**
 
 If you want to link to a specific paragraph or sentence, you must add an explicit anchor using inline HTML:
@@ -271,6 +364,8 @@ Then link to it:
     ```
     @explanation: [Planet definition](#planet-definition)
     ```
+
+<br>
 
 **Reference-Style Links**
 
@@ -285,6 +380,8 @@ Instead of writing the reference in the explanation, you can define it as below:
 ```
 [planets]: lecture_notes.md#order-of-the-planets
 ```
+
+
 
 ###Linking DEMO
 
@@ -315,12 +412,19 @@ It is possible to have multiple quizzes in a markdown file.
 Also, we can have multiple markdown files connected, so that the quizzes in one file will be shown when opening the other file. For this, we have:
 
 
-```@include: additional_quizzes.md, id1, id2, … syntax.
+```
+@include: file=additional_quizzes.md, if= id1, id2, …
 ```
 
 The following quiz was imported from another file:
 
-@include: file=index.md,  id=comprehensive-math-science-quiz
+=== "Code"
+    ```
+    ‎@include: file=index.md,  id=comprehensive-math-science-quiz
+    ```
+
+=== "Rendered quiz"
+    @include: file=index.md,  id=comprehensive-math-science-quiz
 
 ##Contributions
 
@@ -360,91 +464,66 @@ We appreciate your help in making this plugin better!
 
 ## FAQ
 
-**Q: How do I include images in my quiz questions?**
+>* Q: How do I include images in my quiz questions?
 
- You can include images using standard Markdown syntax ![alt text](image_url) anywhere in your question text, answer options, or ordering items. The plugin will automatically render these images.
-
-
-**Q: Can I create math equations in my quizzes?**
-
- Yes! The plugin includes MathJax support for LaTeX math notation. Use $...$ for inline math and $$...$$ or \[...\] for display math.
+ You can include images using standard Markdown syntax ``` ![alt text](image_url) ``` anywhere in your question text, answer options, or ordering items. The plugin will automatically render these images.
 
 
-**Q: How do I reuse the same quiz in multiple places?**
+>* Q: Can I create math equations in my quizzes?
 
- Use the @include: directive with the file path to include quizzes from external files. You can also use @id: to reference specific quizzes within included files.
-
-
-**Q: What happens if I don't specify a layout?**
-
- If you don't specify a layout with @layout:, the quiz will default to "book" mode, showing one question at a time with navigation buttons.
+ Yes! The plugin includes MathJax support for LaTeX math notation. Use ``` $...$ ``` for inline math and ``` $$...$$ ``` or ``` \[...\] ``` for display math.
 
 
-**Q: Can I customize the appearance of the quizzes?**
+>* Q: How do I reuse the same quiz in multiple places?
+
+ Use the ``` @include: ``` directive with the file path to include quizzes from external files. You can also use ``` @id: ``` to reference specific quizzes within included files.
+
+
+>* Q: What happens if I don't specify a layout?
+
+ If you don't specify a layout with ``` @layout: ```, the quiz will default to "book" mode, showing one question at a time with navigation buttons.
+
+
+>* Q: Can I customize the appearance of the quizzes?
 
  Yes, the plugin includes a CSS file (quiz.css) that you can modify to change colors, fonts, spacing, and other visual aspects. The plugin supports both light and dark themes.
 
 
-**Q: How do I enable immediate feedback for each question?**
+>* Q: How do I enable immediate feedback for each question?
 
- Set @feedback_mode: immediate in your quiz metadata. This will show whether each answer is correct immediately after answering.
-
-
-**Q: What's the difference between time_limit and time_limit_seconds?**
-
- Both set a timer for the quiz. @time_limit: expects minutes, while @time_limit_seconds: expects seconds. Use whichever is more convenient for your quiz duration.
+ Set ``` @feedback_mode: ``` immediate in your quiz metadata. This will show whether each answer is correct immediately after answering.
 
 
-**Q: Can students skip questions?**
+>* Q: Can students skip questions?
 
- By default, yes (@allow_skip: true). If you want to require answers to all questions, set @allow_skip: false.
-
-
-**Q: How do I add explanations to questions?**
-
- Use @explanation: followed by your explanation text. This will appear when students review their answers or when immediate feedback is enabled.
+ By default, yes (@allow_skip: true). If you want to require answers to all questions, set ``` @allow_skip: false ```
 
 
-**Q: What happens if the timer runs out?**
+>* Q: What happens if the timer runs out?
 
  When the time limit expires, the quiz will automatically submit with whatever answers have been completed so far.
 
 
-**Q: Can I randomize both questions and answers?**
-
- Yes! Use @shuffle_questions: true to randomize question order and @shuffle_answers: true to randomize answer order within each question.
-
-
-**Q: How do I reference specific parts of lecture materials?**
-
- Use @reference: label_name in your quiz question and mark the corresponding location in your lecture notes with %label_name%.
-
-
-**Q: What file formats are supported for images?**
+>* Q: What file formats are supported for images?
 
  The plugin supports all standard web image formats (PNG, JPG, GIF, SVG) via URLs or base64 encoded data URLs.
 
 
-**Q: Can I use this plugin with other MkDocs plugins?**
+>* Q: Can I use this plugin with other MkDocs plugins?
 
- Yes, the quiz plugin is designed to work alongside other MkDocs plugins. Just add it to your plugins: list in mkdocs.yml.
+ Yes, the quiz plugin is designed to work alongside other MkDocs plugins. Just add it to your plugins: list in ``` mkdocs.yml ```
 
 
-**Q: How do I report bugs or request features?**
+>* Q: How do I report bugs or request features?
 
  Please check the project repository for issue tracking and contribution guidelines. You can also contact the development team through the channels specified in the project documentation.
 
 
-**Q: Is there a way to track quiz results or scores?**
+>* Q: Is there a way to track quiz results or scores?
 
  The current version shows scores and results to the user within the browser, but does not include backend tracking. For advanced analytics, you would need to implement custom JavaScript.
 
 
-**Q: Can I use the plugin without a timer?**
+>* Q: Can I use the plugin without a timer?
 
- Yes, simply omit the @time_limit: or @time_limit_seconds: directive. The timer display will be hidden.
-
-
-**Q: How do I create a matching question?**
-
- Use the syntax {left_item|right_item} for each matching pair, with all pairs listed in the question block. The left and right items will be automatically shuffled.
+ Yes, simply omit the @time_limit: directive. The timer display will be hidden.
