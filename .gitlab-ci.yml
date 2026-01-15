@@ -5,7 +5,7 @@ pages:
   script:
     # 1. Install MkDocs
     - pip install mkdocs
-    
+    - pip install mkdocs-material
     # 2. Install YOUR plugin from the current directory
     # This ensures the build process can understand your special syntax
     - pip install . 
