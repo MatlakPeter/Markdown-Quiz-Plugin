@@ -107,6 +107,12 @@ The quiz supports several types of questions:
 
 *   **Multiple Choice:** The user can select multiple correct answers.
 
+=== "Code"
+
+    ![Single Choice code](../screenshots/multipleChoice.png)
+
+=== "Rendered Quiz"
+
 @START
 @title: Multiple Choice Quiz
 Which are the challanges in modern learning?
@@ -131,15 +137,15 @@ The octopus has {{3|1|4|8}} hearts.
 
 @START
 @title: Correct Order Quiz
-(1.) Crack two fresh eggs into a small bowl and whisk them thoroughly with a pinch of salt and pepper.
+(1.) Crack two fresh eggs into a small bowl and whisk them.
 
-(2.) Place a non-stick skillet over medium-low heat and add a knob of butter, allowing it to melt and coat the surface.
+(2.) Place a skillet over medium-low heat and add a knob of butter.
 
-(3.) Pour the whisked egg mixture into the center of the pan and let it sit undisturbed for a few seconds until the edges begin to set.
+(3.) Pour the whisked egg mixture into the center of the pan.
 
-(4.) Gently push the eggs across the skillet with a spatula to form soft curds, allowing the uncooked portions to flow onto the hot surface.
+(4.) Gently push the eggs across the skillet with a spatula to form soft curds.
 
-(5.) Remove the pan from the heat while the eggs are still slightly soft and moist, as the residual heat will finish cooking them.
+(5.) Remove the pan from the heat while the eggs are still slightly soft and moist.
 @END
 
 *   **Matching:** The user must match items from two lists.
