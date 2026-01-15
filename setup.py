@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='mkdocs-quiz_plugin',
-    version='0.9.67',
+    version='0.9.69',
     description='A simple MkDocs plugin to insert a custom HTML component.',
     author='Your Name',
     packages=find_packages(),
