@@ -4,6 +4,16 @@ plugins:
     - search
     - quiz
 
+
+# Activate PyMdown Extensions here
+markdown_extensions:
+  - pymdownx.superfences    # Better code blocks (nesting, etc.)
+  - pymdownx.highlight:     # Syntax highlighting
+      anchor_linenums: true
+  - pymdownx.tabbed:        # Content tabs
+      alternate_style: true 
+
+
 # theme:
 #   name: readthedocs
 
@@ -13,7 +23,7 @@ theme:
     # Light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: orange
+      primary: brown
       accent: orange
       toggle:
         icon: material/brightness-7
