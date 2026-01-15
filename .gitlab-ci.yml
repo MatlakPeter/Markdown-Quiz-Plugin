@@ -19,4 +19,4 @@ pages:
       - public
   only:
     # Change this to 'master' if your default branch is master
-    - main
+    - developer
