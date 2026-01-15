@@ -65,20 +65,15 @@ pip install mkdocs
 | ----------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
 | `@START` / `@END`       | Marks the beginning and end of the interactive quiz block.                                              | N/A                                               |
 | `@id: <unique_name>`      | Assigns a unique identifier to a quiz instance, essential for referencing specific quizzes.             | N/A                                               |
-| `@include: <file_path>` | Imports a specific quiz from an external file for reusability.                                          | N/A                                               |
+| `@include: file=file_name,  id=quiz_id` | Imports a specific quiz from an external file for reusability.                                          | N/A                                               |
 | `@title: <text>`        | Sets the main header for the quiz.                                                                      | Hidden if not provided.                           |
 | `@description: <text>`  | Sets the introductory instructions for the quiz.                                                        | Hidden if not provided.                           |
 | `@layout: <list/book>`  | Defines the quiz layout. `list` shows all questions vertically, `book` shows one question per slide.      | `book`                                            |
 | `@feedback_mode: <end/immediate>` | `immediate` shows results after each question, `end` reveals results only upon final submission. | `end`                                             |
 | `@shuffle_questions: <true/false>` | Randomizes the order of questions to prevent memorization.                                   | `false`                                           |
-| `@shuffle_answers: <true/false>` | Randomizes the order of answer options.                                                         | `true`                                            |
-| `@time_limit: <minutes>` | Sets a countdown timer in minutes.                                                                      | Hidden if not provided.                           |
-| `@time_limit_seconds: <seconds>` | Alternative to `time_limit` for shorter quizzes, specified in seconds.                          | Hidden if not provided.                           |
+| `@time_limit: <seconds>` | Sets a countdown timer in seconds.                                                                      | Hidden if not provided.                           |
 | `@allow_back: <true/false>` | Allows the user to go back to previous questions.                                                     | `true`                                            |
-| `@allow_skip: <true/false>` | Determines if questions can be left unanswered.                                                       | `true`                                            |
-| `@enable_survey: <true/false>` | Toggles a mini-feedback form for students after the quiz.                                         | `false`                                           |
 | `@explanation: <text>`  | Provides context for the correct answer during feedback.                                                | N/A                                               |
-| `@reference: <anchor_id>` | Creates a 'Go to definition' link to jump to relevant lecture notes.                                    | N/A                                               |
 
 
 **Quiz Types**
@@ -128,12 +123,24 @@ Which are the challanges in modern learning?
 
 >* Note: The first answer in the list is automatically considered as the correct one!
 
+=== "Code"
+
+    ![Single Choice code](../screenshots/dropdown.png)
+
+=== "Rendered Quiz"
+
 @START
 @title: Dropdown Quiz
 The octopus has {{3|1|4|8}} hearts.
 @END
 
 *   **Ordering:** The user must arrange items in the correct order.
+
+=== "Code"
+
+    ![Single Choice code](../screenshots/ordering.png)
+
+=== "Rendered Quiz"
 
 @START
 @title: Correct Order Quiz
@@ -149,6 +156,12 @@ The octopus has {{3|1|4|8}} hearts.
 @END
 
 *   **Matching:** The user must match items from two lists.
+
+=== "Code"
+
+    ![Single Choice code](../screenshots/matching.png)
+
+=== "Rendered Quiz"
 
 @START
 @title: Matching Quiz
@@ -167,6 +180,14 @@ Match the painter with the artwork
 
 *   **Picture Questions:** Questions that include images.
 
+>* NOTE: One can add an url link from an online picture or the relative path to a subfolder of "docs" for local images (../subfolder/image.png)
+
+=== "Code"
+
+    ![Single Choice code](../screenshots/pictureQuiz.png)
+
+=== "Rendered Quiz"
+
 @START
 @title: Picture Quiz
 Identify the object shown below:
@@ -177,10 +198,12 @@ Identify the object shown below:
 
 @END
 
-
+ 
 ## Features
 
-**Referencing and Explanations**
+###Referencing and Explanations
+
+**Explanations**
 
 You can add explanations to each quiz question using a simple syntax. To include an explanation, write:
 
@@ -188,21 +211,105 @@ You can add explanations to each quiz question using a simple syntax. To include
 @explanation: Actual markdown text for the explanation. This is an explanation.
 ```
 
-You can also include a reference to the relevant section of the lecture material, so students can jump directly to where the answer is explained. When the student clicks the reference link in the quiz, they will be taken directly to the marked location in the lecture material. This requires adding a reference label both in the quiz question and in the lecture material.
+@START
+@title: Explanations first example 
 
-In the quiz question body:
+Which of the following is not a position in football/soccer?
+[ ] Goal defense
+[x] Left midfielder
+[ ] Right fullback
+[ ] Centre back
+@explanation: This is a simple explanation.
+
+@END
+
+**Referencing Lecture Material**
+
+>* Questions can link directly to lecture notes
+>* Using standard Markdown links
+>* Students can jump directly to the relevant explanation.
+
+**Reference to headers**
+
+Headings automatically create anchors. Anchors are in lowercase letters and dash-separated.
+
+=== "Linking to the same file"
+    Planets Lecture: 
+    ```
+    ##Order of the planets
+    The planets orbit the Sun in a fixed order.
+    ```
+
+    Quiz explanation:
+    ```
+    @explanation: 
+    See list of the planets [here](#order-of-the-planets)
+    ```
+
+=== "Linking to another file"
+    Football Lecture: lecture_notes.md
+    ```
+    ##Football positions
+    There are a lot of footbal positions.
+    ```
+
+    Quiz explanation:
+    ```
+    @explanation: 
+    See the football positions [here](lecture_notes.md#football-positions)
+    ```
+
+**Reference to Non-Heading Content**
+
+If you want to link to a specific paragraph or sentence, you must add an explicit anchor using inline HTML:
+    ```
+    <a id="planet-definition"></a>
+    The planets orbit the Sun in a fixed order.
+    ```
+
+Then link to it:
+    ```
+    @explanation: [Planet definition](#planet-definition)
+    ```
+
+**Reference-Style Links**
+
+Useful for longer explanations or repeated links.
 
 ```
-@reference: reference_label
+@explanation: The correct order is explained here [details][planets].
 ```
 
-In the lecture material (markdown file):
+Instead of writing the reference in the explanation, you can define it as below: 
 
 ```
-Random text. %reference_label% The explanation starts with this sentence. And the text here goes on.
+[planets]: lecture_notes.md#order-of-the-planets
 ```
 
-**Multiple Quizzes in Mkdown Files**
+###Linking DEMO
+
+Lecture material: 
+<a id="order-of-the-planets"></a>
+Here is the order of the planets in our solar system, starting from the Sun, along with a popular mnemonic to help you remember them.
+
+Order of the Planets
+Mnemonic Phrase: "My Very Educated Mother Just Served Us Noodles."
+
+Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune
+
+@START
+@title: Explanations second example
+
+Put the planets in order from the Sun:
+(1.) Mercury
+(2.) Venus
+(3.) Earth
+(4.) Mars
+@explanation: See [Order of the planets](#order-of-the-planets)
+@END
+
+
+###Multiple Quizzes in Mkdown Files
 
 It is possible to have multiple quizzes in a markdown file. 
 Also, we can have multiple markdown files connected, so that the quizzes in one file will be shown when opening the other file. For this, we have:
@@ -213,7 +320,7 @@ Also, we can have multiple markdown files connected, so that the quizzes in one 
 
 The following quiz was imported from another file:
 
-@include: quizzes.md, 1
+@include: file=index.md,  id=comprehensive-math-science-quiz
 
 ##Contributions
 

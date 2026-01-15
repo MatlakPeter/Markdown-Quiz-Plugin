@@ -122,6 +122,7 @@ function initializeQuiz(container) {
         if (startScreen) startScreen.style.display = 'none';
         if (mainWrapper) mainWrapper.style.display = 'block';
         updateDisplay();
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
         startTimer();
     }
 
@@ -131,6 +132,7 @@ function initializeQuiz(container) {
         questions[currentActualIndex].style.display = "none";
         currentIndex += delta;
         updateDisplay();
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function updateDisplay() {
@@ -202,7 +204,7 @@ function initializeQuiz(container) {
             }
 
             if (progressBar && questions.length > 0) {
-                const progressPercent = (currentIndex / questions.length) * 100;
+                const progressPercent = (currentIndex / questions.length) * 100 + 1;
                 progressBar.style.width = `${progressPercent}%`;
             }
 
@@ -220,6 +222,8 @@ function initializeQuiz(container) {
         if (progressBar) {
             progressBar.style.width = "100%";
         }
+
+        if (statusText) statusText.style.display = "none";
 
         if (mainWrapper) {
             const allQuestions = mainWrapper.querySelectorAll(".quiz-question-block");
@@ -257,6 +261,13 @@ function initializeQuiz(container) {
         // 1. Reset State Variables
         currentIndex = 0;
         timeLeft = isNaN(timeLimitSeconds) ? null : timeLimitSeconds;
+
+        if (timeLeft !== null && timeLeft > 0) {
+            if (timerDisplayContainer) {
+                timerDisplayContainer.style.display = 'block';
+            }
+            setupTimerDisplay();
+        }
 
         // 2. DOM Cleanup: Questions and Answers
         questions.forEach(q => {
@@ -309,6 +320,40 @@ function initializeQuiz(container) {
             }
         });
 
+        const currentQuestions = container.querySelectorAll(".quiz-question-block");
+        currentQuestions.forEach(q => {
+            // 1. Re-randomize standard answers
+            const answerContainer = q.querySelector(".quiz-answer-container");
+            if (answerContainer) {
+                randomizeAnswers(answerContainer);
+            }
+
+            // 2. Re-randomize dropdowns
+            const dropdown = q.querySelector(".quiz-dropdown");
+            if (dropdown) {
+                setupDropdown(dropdown);
+            }
+
+            // 3. Re-randomize Matching
+            if (q.dataset.type === 'matching') {
+                const leftContainer = q.querySelector(".quiz-match-left");
+                const rightContainer = q.querySelector(".quiz-match-right");
+                if (leftContainer && rightContainer) {
+                    const leftItems = Array.from(leftContainer.querySelectorAll(".quiz-match-item"));
+                    const rightItems = Array.from(rightContainer.querySelectorAll(".quiz-match-item"));
+                    shuffleArray(leftItems);
+                    shuffleArray(rightItems);
+                    leftItems.forEach(item => leftContainer.appendChild(item));
+                    rightItems.forEach(item => rightContainer.appendChild(item));
+                }
+            }
+
+            // 4. Re-randomize Ordering
+            if (q.dataset.type === 'ordering') {
+                initOrdering(q);
+            }
+        });
+
         // 3. UI Toggle
         if (resultsDiv) {
             resultsDiv.style.display = 'none';
@@ -332,6 +377,7 @@ function initializeQuiz(container) {
         if (startScreen) {
             startScreen.style.display = 'block';
             mainWrapper.style.display = 'none';
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
             updateDisplay();
         }
@@ -787,7 +833,9 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
         if (result.isCorrect) totalScore++;
     });
 
-    let comparisonHtml = "";
+    let comparisonHtml = `<p style="margin-bottom: 5px;">
+                You scored <strong>${totalScore}</strong> out of <strong>${questions.length}</strong>
+            </p>`;
     const baselineStr = container.getAttribute("data-baseline"); // Get the baseline from HTML
 
     if (baselineStr) {
@@ -803,9 +851,8 @@ function generateReport(container, timeTakenSeconds, questionOrder) {
 
             // Change: Generate simple paragraph HTML instead of the styled div banner
             comparisonHtml = `
-                <p style="font-weight: bold; color: ${color}; margin-bottom: 15px;">
-                    Result: ${statusText} <br>
-                    <span style="font-weight: normal; color: var(--quiz-text-desc);">
+                <p style="font-size: 1.2em; margin-bottom: 5px; color: var(--md-typeset-color);">
+                    <span style="font-weight: bold; color: ${color};">Result: ${statusText}</span> <br>
                         You scored <strong>${totalScore}</strong> out of <strong>${questions.length}</strong> | Required: <strong>${baseline}</strong> out of <strong>${maxScore}</strong>
                     </span>
                 </p>
@@ -929,12 +976,15 @@ function reportOrdering(questionElement, index, feedbackEnd = true) {
             .join("") +
         `</div>`;
 
+    const explanationHTML = extractExplanationHTML(questionElement);
+
     if (feedbackEnd)
-        return createReportCard(index, questionText, isCorrect, userOrder, correctOrder);
+        return createReportCard(index, questionText, isCorrect, userOrder, correctOrder, explanationHTML);
     return {
         isCorrect,
-        correctOrder: correctOrder
-    }
+        correctOrder: correctOrder,
+        explanationHTML: explanationHTML
+    };
 }
 
 function reportMatching(questionBlock, index, feedbackEnd = true) {
@@ -1074,22 +1124,22 @@ function renderMarkdownToHTML(markdown) {
 // Reusable HTML generator for reports 
 function createReportCard(index, questionText, isCorrect, userAns, correctAns, explanationHTML = '') {
     const statusIcon = isCorrect ? '✅' : '❌';
-    const borderColor = isCorrect ? 'green' : 'red';
-    const userColor = isCorrect ? 'green' : 'red';
+
+    const feedbackColor = isCorrect ? 'var(--quiz-report-correct)' : 'var(--quiz-report-incorrect)';
 
     const html = `
-        <div style="margin-bottom: 15px; padding: 15px; border: 1px solid #ccc; border-left: 5px solid ${borderColor}; background: #fff; border-radius: 5px;">
+        <div style="margin-bottom: 15px; padding: 15px; border: 1px solid #ccc; border-left: 5px solid ${feedbackColor}; border-radius: 5px;">
             <p style="margin: 0 0 10px 0; font-weight: bold;">
                 ${index + 1}. ${questionText} ${statusIcon}
             </p>
-            <div style="font-size: 0.95em; color: #555;">
+            <div style="font-size: 0.95em;">
                 <div style="margin-bottom: 4px;">
                     <strong>Your Answer:</strong> 
-                    <span style="color: ${userColor}">${userAns}</span>
+                    <span style="color: ${feedbackColor}; font-weight: bold;">${userAns}</span>
                 </div>
                 <div>
                     <strong>Correct Answer:</strong> 
-                    <span style="color: green">${correctAns}</span>
+                    <span style="color: var(--quiz-report-correct); font-weight: bold;">${correctAns}</span>
                 </div>
             </div>
             ${explanationHTML}
