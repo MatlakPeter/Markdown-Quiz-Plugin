@@ -1,0 +1,22 @@
+image: python:latest
+
+pages:
+  stage: deploy
+  script:
+    # 1. Install MkDocs
+    - pip install mkdocs
+    
+    # 2. Install YOUR plugin from the current directory
+    # This ensures the build process can understand your special syntax
+    - pip install . 
+    
+    # 3. Build the static site into a folder named "public"
+    # (GitLab Pages specifically looks for a folder named "public")
+    - mkdocs build --site-dir public
+  
+  artifacts:
+    paths:
+      - public
+  only:
+    # Change this to 'master' if your default branch is master
+    - main
