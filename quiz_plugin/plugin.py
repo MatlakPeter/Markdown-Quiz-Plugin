@@ -68,7 +68,8 @@ class QuizPlugin(BasePlugin):
     ANSWER_REGEX = re.compile(r'^\s*\[(x|\s)?\]\s*(.*)', flags=re.MULTILINE)
     DROPDOWN_REGEX = re.compile(r'\{\{(.+?)\}\}')
     ORDER_ITEM_REGEX = re.compile(r'^\s*\((\d+)\.\)\s*(.*)$', flags=re.MULTILINE | re.UNICODE)
-    MATCHING_REGEX = re.compile(r'^\s*\{(.+?)\|(.+?)\}', flags=re.MULTILINE)
+    # MATCHING_REGEX = re.compile(r'^\s*\{(.+?)\|(.+?)\}', flags=re.MULTILINE)
+    MATCHING_REGEX = re.compile(r'^\s*\{([^{}|]+)\|([^{}|]+)\}', flags=re.MULTILINE)
     IMAGE_REGEX = re.compile(r'!\[(.*?)\]\((.*?)\)')
 
     # 4. Explanations
@@ -410,9 +411,11 @@ class QuizPlugin(BasePlugin):
             if not line: continue
             normalized_line = line.replace('\xa0', ' ')
             
-            # Check for Matching {A|B}
+            is_dropdown_line = '{{' in normalized_line
+            
+            # Check for Matching {A|B} only if NOT a dropdown line
             matching_match = self.MATCHING_REGEX.match(normalized_line)
-            if matching_match:
+            if matching_match and not is_dropdown_line:
                 left_text = html.escape(matching_match.group(1).strip())
                 right_text = html.escape(matching_match.group(2).strip())
                 pair_id = f"{len(match_pairs)}"
@@ -472,11 +475,15 @@ class QuizPlugin(BasePlugin):
         # Only process dropdowns if we aren't doing an ordering question
         has_dropdown = False
         if not order_items:
+            dropdown_count = 0  # Initialize a counter
+
             def replace_dropdown(match):
+                nonlocal dropdown_count
                 content = match.group(1)
                 raw_options = content.split('|')
                 
-                select_html = ['<select class="quiz-dropdown">']
+                # Add a data-index attribute to identify this specific dropdown
+                select_html = [f'<select class="quiz-dropdown" data-dropdown-index="{dropdown_count}">']
                 select_html.append('<option disabled selected>Choose...</option>')
                 
                 for i, opt in enumerate(raw_options):
@@ -485,6 +492,7 @@ class QuizPlugin(BasePlugin):
                     select_html.append(f'<option data-correct="{is_correct}">{safe_text}</option>')
                     
                 select_html.append('</select>')
+                dropdown_count += 1
                 return "".join(select_html)
 
             # Check if dropdown exists before replacing to set flag

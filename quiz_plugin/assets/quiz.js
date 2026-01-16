@@ -285,13 +285,13 @@ function initializeQuiz(container) {
             });
 
             // Reset Dropdowns
-            const dropdown = q.querySelector('.quiz-dropdown');
-            if (dropdown) {
+            const dropdowns = q.querySelectorAll('.quiz-dropdown');
+            dropdowns.forEach(dropdown => {
                 dropdown.disabled = false;
                 dropdown.selectedIndex = 0;
                 dropdown.style.border = "";
                 dropdown.style.backgroundColor = "";
-            }
+            });
 
             // Reset Matching
             if (q.dataset.type === 'matching') {
@@ -329,10 +329,10 @@ function initializeQuiz(container) {
             }
 
             // 2. Re-randomize dropdowns
-            const dropdown = q.querySelector(".quiz-dropdown");
-            if (dropdown) {
+            const dropdownsToShuffle = q.querySelectorAll(".quiz-dropdown");
+            dropdownsToShuffle.forEach(dropdown => {
                 setupDropdown(dropdown);
-            }
+            });
 
             // 3. Re-randomize Matching
             if (q.dataset.type === 'matching') {
@@ -505,22 +505,36 @@ function handleCheckButton(btn, questionBlock) {
 
     // dropdown
     else if (type === 'dropdown') {
-        const dropdown = questionBlock.querySelector('.quiz-dropdown')
-        dropdown.disabled = true
-        let selectedOption, correctAnswerDisplay;
-        ({ isCorrect, selectedOption, correctAnswerDisplay } = reportDropdown(questionBlock, questionBlock.dataset.questionIndex, false))
+        const dropdowns = questionBlock.querySelectorAll('.quiz-dropdown');
+        let totalIsCorrect = true;
+        let correctTexts = [];
 
+        dropdowns.forEach(dropdown => {
+            dropdown.disabled = true;
+            const selectedOption = dropdown.options[dropdown.selectedIndex];
+            const isThisCorrect = selectedOption && selectedOption.dataset.correct === 'true';
 
-        if (selectedOption.dataset.correct === 'true') {
-            dropdown.style.border = "2px solid #1e7e34";
-            dropdown.style.backgroundColor = "#28a745";
+            // Find correct text for feedback
+            let correctText = "";
+            dropdown.querySelectorAll('option').forEach(o => {
+                if (o.dataset.correct === "true") correctText = o.textContent;
+            });
+            correctTexts.push(correctText);
+
+            if (isThisCorrect) {
+                dropdown.style.border = "2px solid #1e7e34";
+                dropdown.style.backgroundColor = "#28a745";
+            } else {
+                dropdown.style.border = "2px solid #b02a37";
+                dropdown.style.backgroundColor = "#dc3545";
+                totalIsCorrect = false;
+            }
+        });
+
+        isCorrect = totalIsCorrect;
+        if (!isCorrect) {
+            feedbackText = `Correct Answers: <strong>${correctTexts.join(" | ")}</strong>`;
         }
-        else {
-            dropdown.style.border = "2px solid #b02a37";
-            dropdown.style.backgroundColor = "#dc3545";
-            feedbackText = `Correct Answer: <strong>${correctAnswerDisplay}</strong>`;
-        }
-
     }
     // ordering
     else if (type === 'ordering') {
@@ -915,46 +929,55 @@ function reportQuestion(questionElement, index) {
 
 function reportDropdown(questionBlock, index, feedbackEnd = true) {
     const questionTextElement = questionBlock.querySelector('.quiz-question');
-    const dropdown = questionBlock.querySelector('.quiz-dropdown');
+    const dropdowns = questionBlock.querySelectorAll('.quiz-dropdown');
 
-    let isCorrect = false;
-    let userAnswerDisplay = "None";
-    let correctAnswerDisplay = "";
+    let correctCount = 0;
+    let userAnswers = [];
+    let correctAnswers = [];
 
-    const selectedOption = dropdown.options[dropdown.selectedIndex];
-    if (dropdown) {
+    dropdowns.forEach((dropdown) => {
+        const selectedOption = dropdown.options[dropdown.selectedIndex];
+        let correctText = "";
 
-        // Find correct text
+        // Find correct text for this specific dropdown
         dropdown.querySelectorAll('option').forEach(option => {
-            if (option.dataset.correct === "true") correctAnswerDisplay = option.textContent;
+            if (option.dataset.correct === "true") correctText = option.textContent;
         });
 
-        // Find user text
-        if (selectedOption && !selectedOption.disabled) {
-            userAnswerDisplay = selectedOption.textContent;
-            isCorrect = (selectedOption.dataset.correct === "true");
-        }
-    }
+        const userText = (selectedOption && !selectedOption.disabled) ? selectedOption.textContent : "None";
+        const isThisCorrect = (selectedOption && selectedOption.dataset.correct === "true");
 
-    // Clone question to hide the dropdown UI in the report
+        if (isThisCorrect) correctCount++;
+
+        userAnswers.push(userText);
+        correctAnswers.push(correctText);
+    });
+
+    // A question is only "Correct" if ALL dropdowns are correct
+    const isTotalCorrect = (correctCount === dropdowns.length);
+
+    // Prepare display strings
+    const userDisplay = userAnswers.join(" | ");
+    const correctDisplay = correctAnswers.join(" | ");
+
+    // Clone question for report view
     const questionClone = questionTextElement.cloneNode(true);
-    const dropdownInClone = questionClone.querySelector('.quiz-dropdown');
-
-    if (dropdownInClone) {
+    questionClone.querySelectorAll('.quiz-dropdown').forEach(d => {
         const placeholder = document.createElement('span');
         placeholder.textContent = ' [...] ';
         placeholder.style.fontWeight = "bold";
-        dropdownInClone.parentNode.replaceChild(placeholder, dropdownInClone);
-    }
+        d.parentNode.replaceChild(placeholder, d);
+    });
 
     const explanationHTML = extractExplanationHTML(questionBlock);
-    if (feedbackEnd)
-        return createReportCard(index, questionClone.innerHTML, isCorrect, userAnswerDisplay, correctAnswerDisplay, explanationHTML);
+
+    if (feedbackEnd) {
+        return createReportCard(index, questionClone.innerHTML, isTotalCorrect, userDisplay, correctDisplay, explanationHTML);
+    }
 
     return {
-        isCorrect,
-        selectedOption: selectedOption,
-        correctAnswerDisplay: correctAnswerDisplay,
+        isCorrect: isTotalCorrect,
+        correctAnswerDisplay: correctDisplay,
         explanationHTML: explanationHTML
     };
 }
