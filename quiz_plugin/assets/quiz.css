@@ -27,7 +27,7 @@
     /* Progress & Meta */
     --quiz-bg-meta: var(--md-code-bg-color, #e6edf5);
     --quiz-text-meta: var(--md-primary-fg-color, #2f6fb2);
-    --quiz-progress-bg: var(--md-code-bg-color, #ffffff);
+    --quiz-progress-bg: var(--md-code-bg-color, #f8f9fb);
     --quiz-progress-fill: var(--md-primary-fg-color, #2b68b4);
 
     --quiz-shadow: rgba(0, 0, 0, 0.15);

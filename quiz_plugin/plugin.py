@@ -5,7 +5,7 @@ import logging
 import html
 from mkdocs.plugins import BasePlugin
 from mkdocs.config import config_options
-
+import textwrap
 log = logging.getLogger('mkdocs')
 
 class QuizPlugin(BasePlugin):
@@ -54,7 +54,10 @@ class QuizPlugin(BasePlugin):
     # QUIZ_BLOCK_REGEX = re.compile(r'@START(.*?)@END', flags=re.DOTALL)
     # QUIZ_BLOCK_REGEX = re.compile(r'(?ms)^\s*@START\s*$\n(.?)\n^\s@END\s*$')
     # QUIZ_BLOCK_REGEX = re.compile(r'(?<!\\)@START\s*(.*?)\s*@END', flags=re.DOTALL | re.IGNORECASE)
-    QUIZ_BLOCK_REGEX = re.compile(r'(?m)^\s*@START\s*$\n([\s\S]*?)\n^\s*@END\s*$', flags=re.IGNORECASE)
+    # NEW: Group 1 captures indentation, Group 2 captures content
+    # CHANGE THIS LINE in your class definitions:
+    # Group 1 (\s*) captures the indentation.
+    QUIZ_BLOCK_REGEX = re.compile(r'(?m)^(\s*)@START\s*$\n([\s\S]*?)\n^\s*@END\s*$', flags=re.IGNORECASE)
     
     # 2. Global Metadata & Structural Rules
     QUIZ_META_LINE_REGEX = re.compile(r'^\s*@(\w+)\s*:\s*(.+)$', re.MULTILINE)
@@ -171,12 +174,17 @@ class QuizPlugin(BasePlugin):
         return markdown
 
     def _process_includes(self, markdown, page):
+        # Update regex to capture indentation: r'(?m)^(\s*)@include:\s*(.+)$'
+        # This ensures we respect the indentation of the @include tag itself
+        INCLUDE_REGEX_INDENT = re.compile(r'(?m)^(\s*)@include:\s*(.+)$')
+
         def replace_include(match):
-            # Parse key=value pairs, allowing comma-continued id lists
-            raw_args = match.group(1).strip()
+            include_indent = match.group(1)  # Indentation of the @include line
+            raw_args = match.group(2).strip()
             params = {}
             current_key = None
 
+            # 1. Parse Arguments
             for part in raw_args.split(','):
                 token = part.strip()
                 if not token:
@@ -187,21 +195,18 @@ class QuizPlugin(BasePlugin):
                     current_key = key.strip()
                     params[current_key] = value.strip()
                 else:
-                    # Support trailing values for id/ids lists: id=easy,medium,hard
+                    # Support trailing values for id lists
                     if current_key in ('id', 'ids'):
                         existing = params.get(current_key, '')
                         params[current_key] = (existing + ',' + token).strip(', ')
                     else:
                         log.warning(f"[QuizPlugin] Ignoring unrecognized token '{token}' in @include")
 
-            # Extract filename and IDs
             filename = params.get('file', '')
             if not filename:
-                error_msg = "Error: 'file' parameter is required in @include"
-                log.warning(f"[QuizPlugin] {error_msg}")
-                return f'<p style="color: red;">{error_msg}</p>'
-            
-            # Handle both 'id' and 'ids' parameters (comma-separated values)
+                return f'<p style="color: red;">Error: file parameter missing</p>'
+
+            # Handle IDs
             id_value = params.get('id', params.get('ids', ''))
             specified_ids = [s.strip() for s in id_value.split(',') if s.strip()] if id_value else []
 
@@ -212,64 +217,84 @@ class QuizPlugin(BasePlugin):
                 with open(target_file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 
-                # If the content itself contains further @include statements, 
-                # process it recursively now to fully expand the file content.
+                # Recursive processing
                 processed_content = self._process_includes(content, page)
 
+                # Logic for ID Filtering
                 if specified_ids:
-                    # Logic for ID Filtering (US #104)
+                    # FIX IS HERE: findall now returns tuples (indent, content)
                     blocks = self.QUIZ_BLOCK_REGEX.findall(processed_content)
                     found_blocks = ""
-                    for block_content in blocks:
-                        # Extract metadata from the block content (which is the inner text)
-                        block_meta, _ = self._extract_quiz_meta(block_content)
-                        quiz_id = block_meta.get("id", "").strip() 
-                        
-                        # Compare extracted ID (case-sensitive as per your requirement)
-                        if quiz_id in specified_ids: 
-                            # Reconstruct the block with tags for the main routine to process later
-                            found_blocks += f"@START\n{block_content.strip()}\n@END\n" 
                     
-                    return found_blocks.strip() # Return only the filtered blocks
+                    for match_tuple in blocks:
+                        # 1. Unpack the tuple
+                        if isinstance(match_tuple, tuple):
+                            q_indent, q_content = match_tuple
+                        else:
+                            # Fallback if regex changes again
+                            q_indent, q_content = "", match_tuple
+
+                        # 2. Check metadata
+                        block_meta, _ = self._extract_quiz_meta(q_content)
+                        quiz_id = block_meta.get("id", "").strip()
+                        
+                        if quiz_id in specified_ids:
+                            # 3. Reconstruct the block preserving its original indentation
+                            found_blocks += f"{q_indent}@START\n{q_content}\n{q_indent}@END\n"
+                    
+                    final_content = found_blocks
                 
-                else: 
-                    # Logic for Simple Inclusion (No ID specified)
-                    return processed_content.strip() # Return all expanded content
+                else:
+                    final_content = processed_content
+
+                # Apply the parent @include indentation to the whole result
+                if not final_content: return ""
+                
+                # Strip blank lines to prevent massive gaps, then re-indent
+                lines = final_content.strip().split('\n')
+                return "\n".join(include_indent + line for line in lines)
                     
             except FileNotFoundError:
-                error_msg = f"Error: File not found: {filename}"
-                log.warning(f"[QuizPlugin] {error_msg}")
-                return f'<p style="color: red;">{error_msg}</p>'
+                log.warning(f"[QuizPlugin] File not found: {filename}")
+                return ""
             except Exception as e:
                 log.error(f"[QuizPlugin] Error reading {filename}: {e}")
                 return ""
         
-        return self.INCLUDE_REGEX.sub(replace_include, markdown)
+        return INCLUDE_REGEX_INDENT.sub(replace_include, markdown)
 
     def _process_quizzes(self, markdown):
         """
         Finds all quiz blocks (@START...@END) and replaces them with the
-        rendered HTML structure.
+        rendered HTML structure, strictly preserving indentation.
         """
         def replace_quiz_block(match):
-            block_content = match.group(1)
+            indent = match.group(1) # Capture the tab indentation
+            block_content = match.group(2)
 
-            # 1. Extract Meta-data and Clean Content
+            # --- HELPER: Flatten HTML to a single line ---
+            def _clean_block(text):
+                if not text: return ""
+                # 1. Split into lines
+                # 2. Strip whitespace
+                # 3. Filter empty lines
+                lines = [line.strip() for line in text.split('\n') if line.strip()]
+                # 4. Join with SPACE to make one single long line
+                #    This prevents Markdown from inserting <br> or <p> tags.
+                return " ".join(lines)
+
+            # 1. Extract Meta-data
             quiz_meta, block_content = self._extract_quiz_meta(block_content)
 
             # 2. Split into Questions
             if '---' in block_content:
-                # Split using regex, and clean up empty strings caused by trailing/leading delimiters
                 raw_questions = self.QUESTION_SPLIT_REGEX.split(block_content)
             else:
-                # Treat the entire content as a single question if no separator is found
                 raw_questions = [block_content]
             
-            # Filter out empty strings/whitespace leftover from splitting
             questions = [q for q in raw_questions if q.strip()]
             
-            # 3. Define Container Attributes
-            # Ensure the 'id' meta is extracted (it's in quiz_meta due to _extract_quiz_meta)
+            # 3. Attributes
             layout_mode = self._normalize_choice(quiz_meta.get("layout"), allowed={"book", "list"}, default="book")
             
             container_attrs = {
@@ -286,72 +311,287 @@ class QuizPlugin(BasePlugin):
             }
 
             data_attrs = " ".join(
-                # Generate 'data-key="value"' strings, skipping attributes that are None/empty
                 f'data-{k}="{v}"' for k, v in container_attrs.items() if v is not None and v != ""
             )
 
-            # 4. Assemble HTML Output
-            html_output = []
+            # 4. Assemble HTML List
+            html_parts = []
             
-            # Open the main quiz container
-            html_output.append(f'<div class="quiz-container" markdown="1" {data_attrs}>')
+            html_parts.append(f'<div class="quiz-container" {data_attrs}>')
             
-            # Add the Start Screen
-            html_output.append(self._render_start_screen(quiz_meta, total_questions=len(questions)))
+            # Clean the Start Screen HTML
+            start_screen_html = self._render_start_screen(quiz_meta, total_questions=len(questions))
+            html_parts.append(_clean_block(start_screen_html))
             
-            # Open the main wrapper (Hidden until the user presses Start)
-            html_output.append('<div class="quiz-main-wrapper" style="display: none;">')
+            html_parts.append('<div class="quiz-main-wrapper" style="display: none;">')
             
-            # Add Header (Timer/Progress Bar)
-            html_output.append("""
+            # Clean the Header HTML
+            html_parts.append(_clean_block("""
                 <div class="quiz-header">
-                    
                     <div class="quiz-timer-display">
                         Time Left: <span id="time-display"></span>
                     </div>
-                    
                     <div class="quiz-progress-container">
                         <div class="quiz-progress-bar"></div>
                     </div>
-                    
                     <span class="quiz-status-text"></span>
-                    
                 </div>
-            """)
+            """))
             
-            # Add Questions
             for index, q_text in enumerate(questions):
                 q_html = self._render_single_question(q_text, index, layout=layout_mode)
-                html_output.append(q_html)
+                html_parts.append(_clean_block(q_html))
 
-            # Add Navigation/Footer
-            html_output.append(f'''
+            # Clean Navigation HTML
+            html_parts.append(_clean_block('''
                 <div class="quiz-navigation">
                     <button class="quiz-nav-previous" style="display: none;">Previous</button>  
                     <span class="quiz-status-text"></span>
                     <button class="quiz-nav-next">Next</button>
-                    <button class="quiz-nav-submit">Submit</button>  </div>
-                ''')
+                    <button class="quiz-nav-submit">Submit</button>
+                </div>
+            '''))
             
-            # Add Results Div
-            html_output.append('<div class="quiz-results"></div>')
+            html_parts.append('<div class="quiz-results"></div>')
 
-            # 2. Add the Retake Button (Safe container OUTSIDE the results div)
-            html_output.append('''
+            # Clean Retake Button HTML
+            html_parts.append(_clean_block('''
                 <div class="quiz-retake-container" style="text-align: center; margin-top: 20px;">
                     <button class="quiz-btn-retake" style="display: none;">Retake Quiz</button>
                 </div>
-            ''')
+            '''))
 
-            # Close the quiz-main-wrapper
-            html_output.append('</div>') 
+            html_parts.append('</div>') # Close wrapper
+            html_parts.append('</div>') # Close container
+
+            # --- INDENTATION APPLICATION ---
+            # 1. Join all parts into one string (NOW IT IS ONE SINGLE LINE)
+            full_html_string = "".join(html_parts)
             
-            # Close the quiz-container (PREVENTS CONTENT LEAKAGE)
-            html_output.append('</div>') 
+            # 2. Add the Tab indentation to the start
+            return indent + full_html_string
 
-            return "\n".join(html_output)
+        return self.QUIZ_BLOCK_REGEX.sub(replace_quiz_block, markdown)
+        """
+        Finds all quiz blocks (@START...@END) and replaces them with the
+        rendered HTML structure, strictly preserving indentation.
+        """
+        def replace_quiz_block(match):
+            indent = match.group(1) # Capture the tab indentation
+            block_content = match.group(2)
 
-        # Substitute all @START...@END blocks using the replacement function
+            # --- HELPER: Forcefully remove indentation AND blank lines ---
+            def _clean_block(text):
+                if not text: return ""
+                # 1. Split into lines
+                # 2. Strip leading whitespace (lstrip)
+                # 3. Filter out lines that are empty (if line.strip())
+                lines = [line.lstrip() for line in text.split('\n') if line.strip()]
+                # 4. Re-join them
+                return "\n".join(lines)
+
+            # 1. Extract Meta-data
+            quiz_meta, block_content = self._extract_quiz_meta(block_content)
+
+            # 2. Split into Questions
+            if '---' in block_content:
+                raw_questions = self.QUESTION_SPLIT_REGEX.split(block_content)
+            else:
+                raw_questions = [block_content]
+            
+            questions = [q for q in raw_questions if q.strip()]
+            
+            # 3. Attributes
+            layout_mode = self._normalize_choice(quiz_meta.get("layout"), allowed={"book", "list"}, default="book")
+            
+            container_attrs = {
+                "id": quiz_meta.get("id"),
+                "layout": layout_mode,
+                "timer": quiz_meta.get("time_limit"),
+                "baseline": quiz_meta.get("required_score"),
+                "shuffle-questions": self._normalize_choice(quiz_meta.get("shuffle_questions"), allowed={"true", "false"}, default="false"),
+                "shuffle-answers": self._normalize_choice(quiz_meta.get("shuffle_answers"), allowed={"true", "false"}, default="true"),
+                "feedback-mode": self._normalize_choice(quiz_meta.get("feedback_mode"), allowed={"immediate", "end"}, default="end"),
+                "allow-skip": self._normalize_choice(quiz_meta.get("allow_skip"), allowed={"true", "false"}, default="true"),
+                "enable-survey": self._normalize_choice(quiz_meta.get("enable_survey"), allowed={"true", "false"}, default="false"),
+                "allow-back": quiz_meta.get("allow_back"),
+            }
+
+            data_attrs = " ".join(
+                f'data-{k}="{v}"' for k, v in container_attrs.items() if v is not None and v != ""
+            )
+
+            # 4. Assemble HTML List
+            html_parts = []
+            
+            html_parts.append(f'<div class="quiz-container" {data_attrs}>')
+            
+            # Clean the Start Screen HTML
+            start_screen_html = self._render_start_screen(quiz_meta, total_questions=len(questions))
+            html_parts.append(_clean_block(start_screen_html))
+            
+            html_parts.append('<div class="quiz-main-wrapper" style="display: none;">')
+            
+            # Clean the Header HTML
+            html_parts.append(_clean_block("""
+                <div class="quiz-header">
+                    <div class="quiz-timer-display">
+                        Time Left: <span id="time-display"></span>
+                    </div>
+                    <div class="quiz-progress-container">
+                        <div class="quiz-progress-bar"></div>
+                    </div>
+                    <span class="quiz-status-text"></span>
+                </div>
+            """))
+            
+            for index, q_text in enumerate(questions):
+                q_html = self._render_single_question(q_text, index, layout=layout_mode)
+                html_parts.append(_clean_block(q_html))
+
+            # Clean Navigation HTML
+            html_parts.append(_clean_block('''
+                <div class="quiz-navigation">
+                    <button class="quiz-nav-previous" style="display: none;">Previous</button>  
+                    <span class="quiz-status-text"></span>
+                    <button class="quiz-nav-next">Next</button>
+                    <button class="quiz-nav-submit">Submit</button>
+                </div>
+            '''))
+            
+            html_parts.append('<div class="quiz-results"></div>')
+
+            # Clean Retake Button HTML
+            html_parts.append(_clean_block('''
+                <div class="quiz-retake-container" style="text-align: center; margin-top: 20px;">
+                    <button class="quiz-btn-retake" style="display: none;">Retake Quiz</button>
+                </div>
+            '''))
+
+            html_parts.append('</div>') # Close wrapper
+            html_parts.append('</div>') # Close container
+
+            # --- INDENTATION APPLICATION ---
+            # 1. Join all parts into one string (which is now guaranteed to have NO blank lines)
+            full_html_string = "\n".join(html_parts)
+            
+            # 2. Split and apply the Tab indentation to every line
+            #    (Note: Since we ran _clean_block earlier, we know every line starts at column 0)
+            final_lines = [indent + line for line in full_html_string.split('\n')]
+            
+            return "\n".join(final_lines)
+
+        return self.QUIZ_BLOCK_REGEX.sub(replace_quiz_block, markdown)
+        """
+        Finds all quiz blocks (@START...@END) and replaces them with the
+        rendered HTML structure, strictly preserving indentation.
+        """
+        def replace_quiz_block(match):
+            indent = match.group(1) # Capture the tab indentation
+            block_content = match.group(2)
+
+            # --- HELPER: Forcefully remove all indentation from HTML chunks ---
+            def _clean_block(text):
+                if not text: return ""
+                # Split into lines, strip leading whitespace (tabs/spaces) from each line
+                lines = [line.lstrip() for line in text.split('\n')]
+                # Re-join them (flattens the HTML, which is safe and 100% robust)
+                return "\n".join(lines)
+
+            # 1. Extract Meta-data
+            quiz_meta, block_content = self._extract_quiz_meta(block_content)
+
+            # 2. Split into Questions
+            if '---' in block_content:
+                raw_questions = self.QUESTION_SPLIT_REGEX.split(block_content)
+            else:
+                raw_questions = [block_content]
+            
+            questions = [q for q in raw_questions if q.strip()]
+            
+            # 3. Attributes
+            layout_mode = self._normalize_choice(quiz_meta.get("layout"), allowed={"book", "list"}, default="book")
+            
+            container_attrs = {
+                "id": quiz_meta.get("id"),
+                "layout": layout_mode,
+                "timer": quiz_meta.get("time_limit"),
+                "baseline": quiz_meta.get("required_score"),
+                "shuffle-questions": self._normalize_choice(quiz_meta.get("shuffle_questions"), allowed={"true", "false"}, default="false"),
+                "shuffle-answers": self._normalize_choice(quiz_meta.get("shuffle_answers"), allowed={"true", "false"}, default="true"),
+                "feedback-mode": self._normalize_choice(quiz_meta.get("feedback_mode"), allowed={"immediate", "end"}, default="end"),
+                "allow-skip": self._normalize_choice(quiz_meta.get("allow_skip"), allowed={"true", "false"}, default="true"),
+                "enable-survey": self._normalize_choice(quiz_meta.get("enable_survey"), allowed={"true", "false"}, default="false"),
+                "allow-back": quiz_meta.get("allow_back"),
+            }
+
+            data_attrs = " ".join(
+                f'data-{k}="{v}"' for k, v in container_attrs.items() if v is not None and v != ""
+            )
+
+            # 4. Assemble HTML List
+            html_parts = []
+            
+            # Open Container
+            html_parts.append(f'<div class="quiz-container" {data_attrs}>')
+            
+            # Start Screen (Cleaned)
+            start_screen_html = self._render_start_screen(quiz_meta, total_questions=len(questions))
+            html_parts.append(_clean_block(start_screen_html))
+            
+            html_parts.append('<div class="quiz-main-wrapper" style="display: none;">')
+            
+            # Header (Cleaned)
+            html_parts.append(_clean_block("""
+                <div class="quiz-header">
+                    <div class="quiz-timer-display">
+                        Time Left: <span id="time-display"></span>
+                    </div>
+                    <div class="quiz-progress-container">
+                        <div class="quiz-progress-bar"></div>
+                    </div>
+                    <span class="quiz-status-text"></span>
+                </div>
+            """))
+            
+            # Questions (Cleaned)
+            for index, q_text in enumerate(questions):
+                q_html = self._render_single_question(q_text, index, layout=layout_mode)
+                html_parts.append(_clean_block(q_html))
+
+            # Navigation (Cleaned)
+            html_parts.append(_clean_block('''
+                <div class="quiz-navigation">
+                    <button class="quiz-nav-previous" style="display: none;">Previous</button>  
+                    <span class="quiz-status-text"></span>
+                    <button class="quiz-nav-next">Next</button>
+                    <button class="quiz-nav-submit">Submit</button>
+                </div>
+            '''))
+            
+            html_parts.append('<div class="quiz-results"></div>')
+
+            # Retake Button (Cleaned)
+            html_parts.append(_clean_block('''
+                <div class="quiz-retake-container" style="text-align: center; margin-top: 20px;">
+                    <button class="quiz-btn-retake" style="display: none;">Retake Quiz</button>
+                </div>
+            '''))
+
+            html_parts.append('</div>') # Close wrapper
+            html_parts.append('</div>') # Close container
+
+            # --- INDENTATION APPLICATION ---
+            # 1. Join all parts
+            full_html_string = "\n".join(html_parts)
+            
+            # 2. Split and apply the Tab indentation to every line
+            #    (Note: Since we ran _clean_block earlier, we know every line starts at column 0,
+            #     so adding `indent` puts it exactly where it belongs in the Tab.)
+            final_lines = [indent + line for line in full_html_string.split('\n')]
+            
+            return "\n".join(final_lines)
+
         return self.QUIZ_BLOCK_REGEX.sub(replace_quiz_block, markdown)
 
     def _extract_explanation(self, question_text):
@@ -569,12 +809,14 @@ class QuizPlugin(BasePlugin):
         '''
     def _escape_html_attr(self, text):
         """Escape text for safe inclusion in HTML attribute values."""
+        if not text: return ""
         return (text
                 .replace('&', '&amp;')
                 .replace('"', '&quot;')
                 .replace("'", '&#39;')
                 .replace('<', '&lt;')
-                .replace('>', '&gt;'))
+                .replace('>', '&gt;')
+                .replace('\n', '&#10;')) # <--- ADD THIS LINE
     
     def _safe_math_escape(self, text):
         """Escapes HTML but preserves backslashes for MathJax."""
