@@ -200,6 +200,8 @@ The quiz supports several types of questions:
 
 <br>
 
+<br>
+
 *   **Ordering:** The user must arrange items in the correct order.
 
 === "Code"
@@ -229,6 +231,8 @@ The quiz supports several types of questions:
     (5.) Remove the pan from the heat while the eggs are still slightly soft and moist.
 
     @END
+
+<br>
 
 <br>
 
