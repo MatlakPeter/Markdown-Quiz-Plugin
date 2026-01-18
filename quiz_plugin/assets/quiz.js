@@ -36,7 +36,7 @@ function initializeQuiz(container) {
     const submitBtn = container.querySelector('.quiz-nav-submit');
     const statusText = container.querySelector(".quiz-status-text");
     const progressBar = container.querySelector(".quiz-progress-bar");
-    const progressBarContainer = container.querySelector(".quiz-progress-container"); 
+    const progressBarContainer = container.querySelector(".quiz-progress-container");
     const resultsDiv = container.querySelector(".quiz-results");
     const navContainer = container.querySelector(".quiz-navigation");
 
@@ -62,6 +62,8 @@ function initializeQuiz(container) {
     let timeLeft = isNaN(timeLimitSeconds) ? null : timeLimitSeconds;
     let timerInterval = null;
     let startTime = null;
+
+    const warningThreshold = isNaN(timeLimitSeconds) ? 0 : timeLimitSeconds * 0.10;
 
     // Quiz State
     let currentIndex = 0;
@@ -101,9 +103,23 @@ function initializeQuiz(container) {
     function startTimer() {
         if (timeLeft === null || timeLeft <= 0) return;
         startTime = Date.now();
+
+        // Calculate 10% of total time for the warning
+        const warningThreshold = timeLimitSeconds * 0.10;
+
         timerInterval = setInterval(() => {
             timeLeft--;
-            timeDisplaySpan.textContent = formatTime(timeLeft);
+
+            // Update the display text
+            if (timeDisplaySpan) {
+                timeDisplaySpan.textContent = formatTime(timeLeft);
+            }
+
+            // Add the warning class if time is low
+            if (timeLeft <= warningThreshold) {
+                container.classList.add('timer-warning');
+            }
+
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
                 handleQuizSubmit(true);
@@ -127,14 +143,14 @@ function initializeQuiz(container) {
     }
 
     function changeQuestion(delta) {
-        if (layout === "list") return; 
-        
+        if (layout === "list") return;
+
         // Hide current
         const currentActualIndex = questionOrder[currentIndex];
-        if(questions[currentActualIndex]) {
+        if (questions[currentActualIndex]) {
             questions[currentActualIndex].style.display = "none";
         }
-        
+
         currentIndex += delta;
         updateDisplay();
         container.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -147,7 +163,7 @@ function initializeQuiz(container) {
 
             questionOrder.forEach((actualIndex) => {
                 const q = questions[actualIndex];
-                q.style.display = "block"; 
+                q.style.display = "block";
                 q.style.borderBottom = "1px solid #ddd";
                 q.style.paddingBottom = "20px";
                 q.style.marginBottom = "20px";
@@ -178,7 +194,7 @@ function initializeQuiz(container) {
         }
         else {
             // --- BOOK MODE LOGIC ---
-            const currentSessionLength = questionOrder.length; 
+            const currentSessionLength = questionOrder.length;
             const actualIndex = questionOrder[currentIndex];
             const currentQuestion = questions[actualIndex];
 
@@ -217,6 +233,7 @@ function initializeQuiz(container) {
 
     function handleQuizSubmit(timeExpired = false) {
         stopTimer();
+        container.classList.remove('timer-warning');
 
         if (progressBar) progressBar.style.width = "100%";
         if (statusText) statusText.style.display = "none";
@@ -244,13 +261,13 @@ function initializeQuiz(container) {
             retakeBtn.textContent = "Retake Full Quiz";
             retakeBtn.style.display = "inline-block";
             retakeFullBtn.style.display = "none";
-            isRetakeMode = false; 
+            isRetakeMode = false;
             wrongQuestionIndices = [];
         }
 
         if (resultsDiv) {
             resultsDiv.innerHTML = reportData.html;
-            resultsDiv.style.display = 'block'; 
+            resultsDiv.style.display = 'block';
             resultsDiv.scrollIntoView({ behavior: 'smooth' });
             triggerMathJax();
             container.classList.add("quiz-results-shown");
@@ -261,6 +278,7 @@ function initializeQuiz(container) {
     questions.forEach((q) => setupQuestion(q, feedbackType));
 
     function resetQuiz(forceFullReset = false) {
+        container.classList.remove('timer-warning');
         const doPartialRetake = !forceFullReset && wrongQuestionIndices.length > 0;
 
         currentIndex = 0;
@@ -268,7 +286,7 @@ function initializeQuiz(container) {
         if (doPartialRetake) {
             isRetakeMode = true;
             questionOrder = [...wrongQuestionIndices];
-            timeLeft = null; 
+            timeLeft = null;
             if (timerDisplayContainer) timerDisplayContainer.style.display = 'none';
         } else {
             isRetakeMode = false;
@@ -277,7 +295,7 @@ function initializeQuiz(container) {
                 if (timerDisplayContainer) timerDisplayContainer.style.display = 'block';
                 setupTimerDisplay();
             }
-            
+
             if (shouldShuffle) {
                 questionOrder = shuffleQuestionOrder(container, questions);
             } else {
@@ -323,25 +341,25 @@ function initializeQuiz(container) {
 
         // Re-randomize options
         questions.forEach(q => {
-             const answerContainer = q.querySelector(".quiz-answer-container");
-             if (answerContainer) randomizeAnswers(answerContainer);
+            const answerContainer = q.querySelector(".quiz-answer-container");
+            if (answerContainer) randomizeAnswers(answerContainer);
 
-             const dropdownsToShuffle = q.querySelectorAll(".quiz-dropdown");
-             dropdownsToShuffle.forEach(dropdown => setupDropdown(dropdown));
+            const dropdownsToShuffle = q.querySelectorAll(".quiz-dropdown");
+            dropdownsToShuffle.forEach(dropdown => setupDropdown(dropdown));
 
-             if (q.dataset.type === 'matching') {
-                 const leftContainer = q.querySelector(".quiz-match-left");
-                 const rightContainer = q.querySelector(".quiz-match-right");
-                 if (leftContainer && rightContainer) {
-                     const leftItems = Array.from(leftContainer.querySelectorAll(".quiz-match-item"));
-                     const rightItems = Array.from(rightContainer.querySelectorAll(".quiz-match-item"));
-                     shuffleArray(leftItems);
-                     shuffleArray(rightItems);
-                     leftItems.forEach(item => leftContainer.appendChild(item));
-                     rightItems.forEach(item => rightContainer.appendChild(item));
-                 }
-             }
-             if (q.dataset.type === 'ordering') initOrdering(q);
+            if (q.dataset.type === 'matching') {
+                const leftContainer = q.querySelector(".quiz-match-left");
+                const rightContainer = q.querySelector(".quiz-match-right");
+                if (leftContainer && rightContainer) {
+                    const leftItems = Array.from(leftContainer.querySelectorAll(".quiz-match-item"));
+                    const rightItems = Array.from(rightContainer.querySelectorAll(".quiz-match-item"));
+                    shuffleArray(leftItems);
+                    shuffleArray(rightItems);
+                    leftItems.forEach(item => leftContainer.appendChild(item));
+                    rightItems.forEach(item => rightContainer.appendChild(item));
+                }
+            }
+            if (q.dataset.type === 'ordering') initOrdering(q);
         });
 
         if (resultsDiv) {
@@ -351,12 +369,12 @@ function initializeQuiz(container) {
         if (retakeBtn) retakeBtn.style.display = 'none';
         if (retakeFullBtn) retakeFullBtn.style.display = 'none';
 
-        if (navContainer) navContainer.style.display = "flex"; 
-        
+        if (navContainer) navContainer.style.display = "flex";
+
         if (submitBtn) {
             submitBtn.disabled = false;
-            submitBtn.innerText = "Submit"; 
-            submitBtn.style.display = "none"; 
+            submitBtn.innerText = "Submit";
+            submitBtn.style.display = "none";
         }
 
         if (startScreen && !doPartialRetake) {
@@ -433,7 +451,7 @@ function handleCheckButton(btn, questionBlock) {
     const type = questionBlock.dataset.type;
     const quizFeedback = questionBlock.querySelector('.quiz-feedback-content')
     if (quizFeedback) quizFeedback.style.display = "block"
-    
+
     let isCorrect = false;
     let feedbackText = "";
 
@@ -626,7 +644,7 @@ function setupMatching(questionBlock) {
         btn.className = "quiz-match-pair";
         btn.dataset.pairId = pairId;
         btn.dataset.userRight = rightPairId;
-        btn.textContent = `${selectedLeft.textContent} -- ${selectedRight.textContent}`;
+        btn.innerHTML = `${selectedLeft.innerHTML} -- ${selectedRight.innerHTML}`;
         btn.classList.add("selected");
 
         solvedArea.appendChild(btn);
@@ -718,7 +736,7 @@ function generateReport(container, timeTakenSeconds, questionOrder, questions, i
         else result = reportQuestion(q, displayIndex);
 
         questionsHTML += result.html;
-        
+
         if (result.isCorrect) {
             totalScore++;
         } else {
@@ -729,8 +747,8 @@ function generateReport(container, timeTakenSeconds, questionOrder, questions, i
     let comparisonHtml = `<p style="margin-bottom: 5px;">
                 You scored <strong>${totalScore}</strong> out of <strong>${questionOrder.length}</strong>
             </p>`;
-    
-    const baselineStr = container.getAttribute("data-baseline"); 
+
+    const baselineStr = container.getAttribute("data-baseline");
     if (baselineStr && !isRetakeMode) {
         const baseline = parseFloat(baselineStr);
         // Use questions.length from the passed array
@@ -779,10 +797,20 @@ function reportQuestion(questionElement, index) {
         if (btn.dataset.correct === "false") isCorrect = false;
     });
 
-    const formatReportIcons = (btns) => {
+    const formatReportIcons = (btns, isUserAnswer = false) => {
         if (btns.length === 0) return '<em>None</em>';
         return `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">` +
-            btns.map(b => `<span class="report-answer-item">${b.innerHTML}</span>`).join("") +
+            btns.map(b => {
+                const isCorrect = b.dataset.correct === "true";
+                const wasSelected = b.classList.contains("selected");
+                let color = "black";
+                if (isUserAnswer && wasSelected) {
+                    color = isCorrect ? "green" : "red";
+                } else if (!isUserAnswer && isCorrect) {
+                    color = "green";
+                }
+                return `<span class="report-answer-item" style="color: ${color};">${b.innerHTML}</span>`;
+            }).join("") +
             `</div>`;
     };
 
@@ -819,8 +847,14 @@ function reportDropdown(questionBlock, index, feedbackEnd = true) {
     });
 
     const isTotalCorrect = (correctCount === dropdowns.length);
-    const userDisplay = userAnswers.join(" | ");
-    const correctDisplay = correctAnswers.join(" | ");
+    const userDisplay = userAnswers.map((answer, i) => {
+        const color = (userAnswers[i] === correctAnswers[i]) ? "green" : "red";
+        return `<span style="color: ${color}">${answer}</span>`;
+    }).join(" | ");
+
+    const correctDisplay = correctAnswers.map(answer =>
+        `<span style="color: green">${answer}</span>`
+    ).join(" | ");
 
     const questionClone = questionTextElement.cloneNode(true);
     questionClone.querySelectorAll('.quiz-dropdown').forEach(d => {
@@ -847,7 +881,11 @@ function reportOrdering(questionElement, index, feedbackEnd = true) {
     const isCorrect = items.every((item, pos) => Number(item.dataset.correctOrder) === pos + 1);
 
     const userOrder = `<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;">` +
-        items.map(item => `<span class="report-order-item">${item.innerHTML}</span>`).join("") + `</div>`;
+        items.map((item, pos) => {
+            const isCorrect = Number(item.dataset.correctOrder) === pos + 1;
+            const color = isCorrect ? "green" : "red";
+            return `<span class="report-order-item" style="color: ${color};">${item.innerHTML}</span>`;
+        }).join("") + `</div>`;
 
     const correctOrder = `<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;">` +
         items.slice()
@@ -868,39 +906,63 @@ function reportMatching(questionBlock, index, feedbackEnd = true) {
 
     const leftLabel = {};
     const rightLabel = {};
-    leftItems.forEach(item => { leftLabel[item.dataset.pairId] = item.innerHTML.trim(); });
-    rightItems.forEach(item => { rightLabel[item.dataset.pairId] = item.innerHTML.trim(); });
+
+    // Map the IDs to their text content for easy lookup
+    leftItems.forEach(item => {
+        leftLabel[item.dataset.pairId] = item.textContent.trim();
+    });
+    rightItems.forEach(item => {
+        rightLabel[item.dataset.pairId] = item.textContent.trim();
+    });
 
     const pairs = Array.from(questionBlock.querySelectorAll(".quiz-match-pair"));
     const userPairs = pairs.map(p => ({
         left: p.dataset.pairId,
         right: p.dataset.userRight,
-        label: `${leftLabel[p.dataset.pairId]} -- ${rightLabel[p.dataset.userRight]}`
+        isCorrect: p.dataset.pairId === p.dataset.userRight
     }));
 
-    const correctPairs = leftItems.map(item => ({
-        left: item.dataset.pairId,
-        right: item.dataset.pairId,
-        label: `${leftLabel[item.dataset.pairId]} -- ${rightLabel[item.dataset.pairId]}`
-    }));
+    // Logic to determine if the whole question is correct
+    const allLeftItemsMatched = userPairs.length === leftItems.length;
+    const allPairsCorrect = userPairs.length > 0 && userPairs.every(up => up.left === up.right);
+    const isCorrect = allPairsCorrect && allLeftItemsMatched;
 
-    const isCorrect = userPairs.length === correctPairs.length && userPairs.every(up => up.left === up.right);
+    let userPairsFormatted = "";
+
+    // Track which left items were actually used by the user
+    const matchedLeftIds = userPairs.map(up => up.left);
+
+    // 1. Format the pairs the user actually created
+    userPairs.forEach(userPair => {
+        const leftText = leftLabel[userPair.left] || "Unknown";
+        const rightText = rightLabel[userPair.right] || "Not matched";
+        const color = userPair.isCorrect ? "green" : "red";
+        userPairsFormatted += `<div style="color: ${color};">${leftText} -- ${rightText}</div>`;
+    });
+
+    // 2. NEW: Identify and add items the user skipped
+    leftItems.forEach(item => {
+        const leftId = item.dataset.pairId;
+        if (!matchedLeftIds.includes(leftId)) {
+            const leftText = leftLabel[leftId];
+            // Explicitly mark skipped items as red with "No selection"
+            userPairsFormatted += `<div style="color: red;">${leftText} -- <span style="font-style: italic;">(No selection)</span></div>`;
+        }
+    });
+
+    // Generate the correct answer key for the report
+    const correctPairsFormatted = leftItems.map(item => {
+        const id = item.dataset.pairId;
+        return `<div style="color: green;">${leftLabel[id]} -- ${rightLabel[id]}</div>`;
+    }).join("");
+
     const explanationHTML = extractExplanationHTML(questionBlock);
 
-    if (feedbackEnd)
-        return createReportCard(
-            index,
-            questionText,
-            isCorrect,
-            userPairs.map(p => `<div>${p.label}</div>`).join("") || "<em>None</em>",
-            correctPairs.map(p => `<div>${p.label}</div>`).join(""),
-            explanationHTML
-        );
-    return {
-        isCorrect,
-        correctPairs: correctPairs.map(p => p.label).join(", "),
-        explanationHTML: explanationHTML
+    if (feedbackEnd) {
+        return createReportCard(index, questionText, isCorrect, userPairsFormatted, correctPairsFormatted, explanationHTML);
     }
+
+    return { isCorrect };
 }
 
 function extractExplanationHTML(questionElement) {

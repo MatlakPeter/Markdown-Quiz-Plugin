@@ -905,3 +905,18 @@
     color: var(--quiz-text-desc);
     /* Light gray/white for dark mode */
 }
+
+
+.quiz-container.timer-warning {
+    border: 3px solid red !important;
+}
+
+.quiz-container.timer-warning #time-display {
+    color: red !important;
+    font-weight: bold !important;
+}
+
+.quiz-container.timer-warning .quiz-timer-display {
+    color: red !important;
+    font-weight: bold !important;
+}

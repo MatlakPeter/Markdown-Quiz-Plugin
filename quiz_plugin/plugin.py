@@ -329,13 +329,14 @@ class QuizPlugin(BasePlugin):
             # Clean the Header HTML
             html_parts.append(_clean_block("""
                 <div class="quiz-header">
-                    <div class="quiz-timer-display">
-                        Time Left: <span id="time-display"></span>
+                    <div class="quiz-timer-container">
+                        <div class="quiz-timer-display">
+                            Time Left: <span id="time-display">00:00</span>
+                        </div>
                     </div>
                     <div class="quiz-progress-container">
                         <div class="quiz-progress-bar"></div>
                     </div>
-                    <span class="quiz-status-text"></span>
                 </div>
             """))
             
@@ -373,6 +374,7 @@ class QuizPlugin(BasePlugin):
             return indent + full_html_string
 
         return self.QUIZ_BLOCK_REGEX.sub(replace_quiz_block, markdown)  
+        
     def _extract_explanation(self, question_text):
         """
         Searches for @explanation: directive in question text.
