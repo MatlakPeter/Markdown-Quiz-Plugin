@@ -44,6 +44,11 @@ function initializeQuiz(container) {
     const layout = container.getAttribute("data-layout") || "book";
     const feedbackType = container.getAttribute("data-feedback-mode");
     const retakeBtn = container.querySelector(".quiz-btn-retake");
+    const retakeFullBtn = document.createElement("button");
+    retakeFullBtn.className = "quiz-btn-retake"; // Reuse existing style class
+    retakeFullBtn.textContent = "Retake Full Quiz";
+    retakeFullBtn.style.display = "none"; // Hidden by default
+    retakeFullBtn.style.marginLeft = "10px"; // Add spacing between buttons
 
     // Timer specific elements
     const startScreen = container.querySelector(".quiz-start-screen");
@@ -79,13 +84,9 @@ function initializeQuiz(container) {
     // INTERNAL HELPER FUNCTIONS
     // =========================================================
 
-    if (resultsDiv && retakeBtn && resultsDiv.contains(retakeBtn)) {
-        const buttonWrapper = document.createElement("div");
-        buttonWrapper.className = "quiz-retake-wrapper";
-        buttonWrapper.style.textAlign = "center";
-        buttonWrapper.style.marginTop = "20px";
-        resultsDiv.parentNode.insertBefore(buttonWrapper, resultsDiv.nextSibling);
-        buttonWrapper.appendChild(retakeBtn);
+    // Insert the new button next to the existing one
+    if (retakeBtn && retakeBtn.parentNode) {
+        retakeBtn.parentNode.appendChild(retakeFullBtn);
     }
 
     function setupTimerDisplay() {
@@ -226,8 +227,6 @@ function initializeQuiz(container) {
             if (timerDisplayContainer) timerDisplayContainer.style.display = "none";
         }
 
-        if (retakeBtn) retakeBtn.style.display = "inline-block";
-
         let timeTaken = null;
         if (startTime !== null) {
             const endTime = Date.now();
@@ -239,8 +238,12 @@ function initializeQuiz(container) {
 
         if (wrongQuestionIndices.length > 0) {
             retakeBtn.textContent = "Retake Missed Questions";
+            retakeBtn.style.display = "inline-block";
+            retakeFullBtn.style.display = "inline-block";
         } else {
             retakeBtn.textContent = "Retake Full Quiz";
+            retakeBtn.style.display = "inline-block";
+            retakeFullBtn.style.display = "none";
             isRetakeMode = false; 
             wrongQuestionIndices = [];
         }
@@ -257,8 +260,8 @@ function initializeQuiz(container) {
     // 1. Setup individual questions
     questions.forEach((q) => setupQuestion(q, feedbackType));
 
-    function resetQuiz() {
-        const doPartialRetake = wrongQuestionIndices.length > 0;
+    function resetQuiz(forceFullReset = false) {
+        const doPartialRetake = !forceFullReset && wrongQuestionIndices.length > 0;
 
         currentIndex = 0;
 
@@ -346,6 +349,7 @@ function initializeQuiz(container) {
             resultsDiv.innerHTML = '';
         }
         if (retakeBtn) retakeBtn.style.display = 'none';
+        if (retakeFullBtn) retakeFullBtn.style.display = 'none';
 
         if (navContainer) navContainer.style.display = "flex"; 
         
@@ -378,7 +382,8 @@ function initializeQuiz(container) {
     if (nextBtn) nextBtn.addEventListener("click", () => changeQuestion(1));
     if (prevBtn) prevBtn.addEventListener("click", () => changeQuestion(-1));
     if (submitBtn) submitBtn.addEventListener('click', () => handleQuizSubmit(false));
-    if (retakeBtn) retakeBtn.addEventListener("click", () => resetQuiz());
+    if (retakeBtn) retakeBtn.addEventListener("click", () => resetQuiz(false));
+    if (retakeFullBtn) retakeFullBtn.addEventListener("click", () => resetQuiz(true));
 }
 
 /**
