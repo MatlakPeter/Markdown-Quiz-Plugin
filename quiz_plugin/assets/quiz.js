@@ -284,6 +284,7 @@ function initializeQuiz(container) {
         currentIndex = 0;
 
         if (doPartialRetake) {
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
             isRetakeMode = true;
             questionOrder = [...wrongQuestionIndices];
             timeLeft = null;
@@ -723,7 +724,11 @@ function generateReport(container, timeTakenSeconds, questionOrder, questions, i
     }
 
     const displayTime = (timeTakenSeconds !== null && !isNaN(timeTakenSeconds) && timeTakenSeconds >= 0);
-    let timeTakenDisplay = displayTime ? formatTime(timeTakenSeconds) : '';
+    let timeTakenDisplay = '';
+
+    if (displayTime) {
+        timeTakenDisplay = formatTime(timeTakenSeconds);
+    }
 
     questionOrder.forEach((actualIndex, displayIndex) => {
         const q = questions[actualIndex];
@@ -767,7 +772,7 @@ function generateReport(container, timeTakenSeconds, questionOrder, questions, i
         }
     }
 
-    const timeHtml = displayTime
+    const timeHtml = (displayTime && !isRetakeMode)
         ? `<p style="font-size: 1em; margin-bottom: 20px;">Time Taken: <strong>${timeTakenDisplay}</strong></p>`
         : `<p style="font-size: 1em; margin-bottom: 20px;"> </p>`;
 
@@ -789,38 +794,49 @@ function generateReport(container, timeTakenSeconds, questionOrder, questions, i
 function reportQuestion(questionElement, index) {
     const questionText = questionElement.querySelector('.quiz-question').innerHTML;
     const allAnswers = Array.from(questionElement.querySelectorAll('.quiz-answer'));
+
     const userSelected = allAnswers.filter(btn => btn.classList.contains('selected'));
     const correctAnswers = allAnswers.filter(btn => btn.dataset.correct === 'true');
 
+    // Logic: Correct if number of items match AND no incorrect items were selected
     let isCorrect = (userSelected.length === correctAnswers.length);
     userSelected.forEach(btn => {
         if (btn.dataset.correct === "false") isCorrect = false;
     });
 
+    // Format answers with partial coloring
     const formatReportIcons = (btns, isUserAnswer = false) => {
         if (btns.length === 0) return '<em>None</em>';
+
         return `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px;">` +
             btns.map(b => {
                 const isCorrect = b.dataset.correct === "true";
                 const wasSelected = b.classList.contains("selected");
                 let color = "black";
-                if (isUserAnswer && wasSelected) {
-                    color = isCorrect ? "green" : "red";
-                } else if (!isUserAnswer && isCorrect) {
-                    color = "green";
+
+                if (isUserAnswer) {
+                    // For user answers: green if correct AND selected, red if incorrect AND selected
+                    if (wasSelected) {
+                        color = isCorrect ? "green" : "red";
+                    }
+                } else {
+                    // For correct answers: show all correct answers in green
+                    color = isCorrect ? "green" : "black";
                 }
+
                 return `<span class="report-answer-item" style="color: ${color};">${b.innerHTML}</span>`;
             }).join("") +
             `</div>`;
     };
 
     const explanationHTML = extractExplanationHTML(questionElement);
+
     return createReportCard(
         index,
         questionText,
         isCorrect,
-        formatReportIcons(userSelected),
-        formatReportIcons(correctAnswers),
+        formatReportIcons(allAnswers.filter(b => b.classList.contains("selected")), true),
+        formatReportIcons(correctAnswers, false),
         explanationHTML
     );
 }
@@ -836,17 +852,25 @@ function reportDropdown(questionBlock, index, feedbackEnd = true) {
     dropdowns.forEach((dropdown) => {
         const selectedOption = dropdown.options[dropdown.selectedIndex];
         let correctText = "";
+
+        // Find correct text for this specific dropdown
         dropdown.querySelectorAll('option').forEach(option => {
             if (option.dataset.correct === "true") correctText = option.textContent;
         });
+
         const userText = (selectedOption && !selectedOption.disabled) ? selectedOption.textContent : "None";
         const isThisCorrect = (selectedOption && selectedOption.dataset.correct === "true");
+
         if (isThisCorrect) correctCount++;
+
         userAnswers.push(userText);
         correctAnswers.push(correctText);
     });
 
+    // A question is only "Correct" if ALL dropdowns are correct
     const isTotalCorrect = (correctCount === dropdowns.length);
+
+    // Color code individual dropdown answers
     const userDisplay = userAnswers.map((answer, i) => {
         const color = (userAnswers[i] === correctAnswers[i]) ? "green" : "red";
         return `<span style="color: ${color}">${answer}</span>`;
@@ -856,6 +880,7 @@ function reportDropdown(questionBlock, index, feedbackEnd = true) {
         `<span style="color: green">${answer}</span>`
     ).join(" | ");
 
+    // Clone question for report view
     const questionClone = questionTextElement.cloneNode(true);
     questionClone.querySelectorAll('.quiz-dropdown').forEach(d => {
         const placeholder = document.createElement('span');
@@ -865,9 +890,11 @@ function reportDropdown(questionBlock, index, feedbackEnd = true) {
     });
 
     const explanationHTML = extractExplanationHTML(questionBlock);
+
     if (feedbackEnd) {
         return createReportCard(index, questionClone.innerHTML, isTotalCorrect, userDisplay, correctDisplay, explanationHTML);
     }
+
     return {
         isCorrect: isTotalCorrect,
         correctAnswerDisplay: correctDisplay,
