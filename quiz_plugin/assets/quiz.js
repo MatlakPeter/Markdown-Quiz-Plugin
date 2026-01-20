@@ -116,7 +116,7 @@ function initializeQuiz(container) {
             }
 
             // Add the warning class if time is low
-            if (timeLeft <= warningThreshold) {
+            if (timeLeft <= warningThreshold || timeLeft <= 5.0) {
                 container.classList.add('timer-warning');
             }
 
@@ -250,7 +250,7 @@ function initializeQuiz(container) {
             timeTaken = Math.floor((endTime - startTime) / 1000);
         }
 
-        const reportData = generateReport(container, timeTaken, questionOrder, questions, isRetakeMode);
+        const reportData = generateReport(container, timeTaken, questionOrder, questions, isRetakeMode, timeExpired);
         wrongQuestionIndices = reportData.wrongIndices;
 
         if (wrongQuestionIndices.length > 0) {
@@ -714,7 +714,7 @@ function initOrdering(questionElement) {
  * SECTION 4: REPORTING ENGINE
  * =============================================================================
  */
-function generateReport(container, timeTakenSeconds, questionOrder, questions, isRetakeMode = false) {
+function generateReport(container, timeTakenSeconds, questionOrder, questions, isRetakeMode = false, timeExpired = false) {
     let totalScore = 0;
     let questionsHTML = "";
     let wrongIndices = [];
@@ -761,7 +761,7 @@ function generateReport(container, timeTakenSeconds, questionOrder, questions, i
         if (!isNaN(baseline)) {
             const hasPassed = totalScore >= baseline;
             const statusText = hasPassed ? "PASSED" : "FAILED";
-            const color = hasPassed ? "green" : "red";
+            const color = hasPassed ? "var(--quiz-report-correct)" : "var(--quiz-report-incorrect)";
             comparisonHtml = `
                 <p style="font-size: 1.2em; margin-bottom: 5px; color: var(--md-typeset-color);">
                     <span style="font-weight: bold; color: ${color};">Result: ${statusText}</span> <br>
@@ -776,10 +776,15 @@ function generateReport(container, timeTakenSeconds, questionOrder, questions, i
         ? `<p style="font-size: 1em; margin-bottom: 20px;">Time Taken: <strong>${timeTakenDisplay}</strong></p>`
         : `<p style="font-size: 1em; margin-bottom: 20px;"> </p>`;
 
+    const timeExpiredHtml = timeExpired 
+        ? `<p style="font-size: 1em; margin-bottom: 20px;"> Time is up! </p>`
+        : `<p style="font-size: 1em; margin-bottom: 20px;"> </p>`;
+
     const finalHTML = `
         <div style="padding: 20px; background-color: #f8f9fa; border-top: 2px solid #333; margin-top: 20px;">
             <h3 style="margin-top: 0;">Quiz Results</h3>
             <p style="font-size: 1.2em; margin-bottom: 5px;">${comparisonHtml}</p>
+            ${timeExpiredHtml}
             ${timeHtml}
             <div class="quiz-review-list">${questionsHTML}</div>
         </div>
@@ -817,11 +822,11 @@ function reportQuestion(questionElement, index) {
                 if (isUserAnswer) {
                     // For user answers: green if correct AND selected, red if incorrect AND selected
                     if (wasSelected) {
-                        color = isCorrect ? "green" : "red";
+                        color = isCorrect ? "var(--quiz-report-correct)" : "var(--quiz-report-incorrect)";
                     }
                 } else {
                     // For correct answers: show all correct answers in green
-                    color = isCorrect ? "green" : "black";
+                    color = isCorrect ? "var(--quiz-report-correct)" : "var(--quiz-report-incorrect)";
                 }
 
                 return `<span class="report-answer-item" style="color: ${color};">${b.innerHTML}</span>`;
@@ -858,7 +863,7 @@ function reportDropdown(questionBlock, index, feedbackEnd = true) {
             if (option.dataset.correct === "true") correctText = option.textContent;
         });
 
-        const userText = (selectedOption && !selectedOption.disabled) ? selectedOption.textContent : "None";
+        const userText = (selectedOption && !selectedOption.disabled) ? selectedOption.textContent : "<em>None</em>";
         const isThisCorrect = (selectedOption && selectedOption.dataset.correct === "true");
 
         if (isThisCorrect) correctCount++;
@@ -872,12 +877,12 @@ function reportDropdown(questionBlock, index, feedbackEnd = true) {
 
     // Color code individual dropdown answers
     const userDisplay = userAnswers.map((answer, i) => {
-        const color = (userAnswers[i] === correctAnswers[i]) ? "green" : "red";
+        const color = (userAnswers[i] === correctAnswers[i]) ? "var(--quiz-report-correct)" : "var(--quiz-report-incorrect)";
         return `<span style="color: ${color}">${answer}</span>`;
     }).join(" | ");
 
     const correctDisplay = correctAnswers.map(answer =>
-        `<span style="color: green">${answer}</span>`
+        `<span style="color: var(--quiz-report-correct)">${answer}</span>`
     ).join(" | ");
 
     // Clone question for report view
@@ -910,7 +915,7 @@ function reportOrdering(questionElement, index, feedbackEnd = true) {
     const userOrder = `<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;">` +
         items.map((item, pos) => {
             const isCorrect = Number(item.dataset.correctOrder) === pos + 1;
-            const color = isCorrect ? "green" : "red";
+            const color = isCorrect ?  "var(--quiz-report-correct)" : "var(--quiz-report-incorrect)";
             return `<span class="report-order-item" style="color: ${color};">${item.innerHTML}</span>`;
         }).join("") + `</div>`;
 
@@ -936,10 +941,10 @@ function reportMatching(questionBlock, index, feedbackEnd = true) {
 
     // Map the IDs to their text content for easy lookup
     leftItems.forEach(item => {
-        leftLabel[item.dataset.pairId] = item.textContent.trim();
+        leftLabel[item.dataset.pairId] = item.innerHTML.trim();
     });
     rightItems.forEach(item => {
-        rightLabel[item.dataset.pairId] = item.textContent.trim();
+        rightLabel[item.dataset.pairId] = item.innerHTML.trim();
     });
 
     const pairs = Array.from(questionBlock.querySelectorAll(".quiz-match-pair"));
@@ -963,7 +968,7 @@ function reportMatching(questionBlock, index, feedbackEnd = true) {
     userPairs.forEach(userPair => {
         const leftText = leftLabel[userPair.left] || "Unknown";
         const rightText = rightLabel[userPair.right] || "Not matched";
-        const color = userPair.isCorrect ? "green" : "red";
+        const color = userPair.isCorrect ? "var(--quiz-report-correct)" : "var(--quiz-report-incorrect)";
         userPairsFormatted += `<div style="color: ${color};">${leftText} -- ${rightText}</div>`;
     });
 
@@ -973,14 +978,14 @@ function reportMatching(questionBlock, index, feedbackEnd = true) {
         if (!matchedLeftIds.includes(leftId)) {
             const leftText = leftLabel[leftId];
             // Explicitly mark skipped items as red with "No selection"
-            userPairsFormatted += `<div style="color: red;">${leftText} -- <span style="font-style: italic;">(No selection)</span></div>`;
+            userPairsFormatted += `<div style="color: var(--quiz-report-incorrect); font-style: italic;">${leftText} -- <span style="font-style: italic;">(No selection)</span></div>`;
         }
     });
 
     // Generate the correct answer key for the report
     const correctPairsFormatted = leftItems.map(item => {
         const id = item.dataset.pairId;
-        return `<div style="color: green;">${leftLabel[id]} -- ${rightLabel[id]}</div>`;
+        return `<div style="color: var(--quiz-report-correct);">${leftLabel[id]} -- ${rightLabel[id]}</div>`;
     }).join("");
 
     const explanationHTML = extractExplanationHTML(questionBlock);
