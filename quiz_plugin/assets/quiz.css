@@ -5,7 +5,7 @@
 :root,
 [data-md-color-scheme="default"] {
     /* Page & Container */
-    --quiz-bg-page: var(--md-code-bg-color, #f8f9fb);
+    --quiz-bg-page: var(--md-code-bg-color, #f8f9fb00);
     --quiz-bg-main: var(--md-default-bg-color, #ffffff);
     /* Adding a default value here ensures buttons aren't transparent in basic themes */
     --quiz-bg-card: var(--md-default-bg-color--light, #ffffff);
@@ -68,7 +68,7 @@
     --quiz-progress-bg: var(--md-code-bg-color, #3d4051);
     --quiz-progress-fill: var(--md-primary-fg-color, #3b82f6);
 
-    --quiz-shadow: rgba(0, 0, 0, 0.6);
+    --quiz-shadow: color-mix(in srgb, var(--md-primary-fg-color), transparent 40%);
     --quiz-bg-report-card: var(--md-default-bg-color, #24242e);
 
     --quiz-report-correct: #81c784; 
@@ -92,7 +92,7 @@
     max-width: 600px;
     padding: 3em 3em;
     border-radius: 18px;
-    box-shadow: 0 8px 20px var(--quiz-shadow);
+    box-shadow: 0 4px 8px var(--quiz-shadow);
     text-align: center;
     margin: 50px auto;
 }
@@ -180,7 +180,8 @@
 /* quiz container */
 .quiz-container {
     font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--quiz-bg-page);
+    /* background: var(--quiz-bg-page, #ffffff00); */
+    background-color: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
