@@ -157,10 +157,12 @@ function initializeQuiz(container) {
     }
 
     function updateDisplay() {
+        const header = document.querySelector('.quiz-header');
         if (layout === "list") {
             // --- LIST MODE LOGIC ---
             questions.forEach(q => q.style.display = "none");
-
+            header.style.position = 'sticky';
+            
             questionOrder.forEach((actualIndex) => {
                 const q = questions[actualIndex];
                 q.style.display = "block";
@@ -193,6 +195,8 @@ function initializeQuiz(container) {
             }
         }
         else {
+            header.style.position = 'relative';
+            header.style.top = 'auto';
             // --- BOOK MODE LOGIC ---
             const currentSessionLength = questionOrder.length;
             const actualIndex = questionOrder[currentIndex];
