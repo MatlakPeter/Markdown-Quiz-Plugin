@@ -15,6 +15,9 @@ markdown_extensions:
   - admonition
   - pymdownx.details
 
+extra_css:
+  - stylesheets/extra.css
+
 # theme:
 #   name: readthedocs
 
