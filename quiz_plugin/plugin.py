@@ -334,6 +334,7 @@ class QuizPlugin(BasePlugin):
                             Time Left: <span id="time-display">00:00</span>
                         </div>
                     </div>
+                     <span class="quiz-status-text"></span>
                     <div class="quiz-progress-container">
                         <div class="quiz-progress-bar"></div>
                     </div>
@@ -348,7 +349,6 @@ class QuizPlugin(BasePlugin):
             html_parts.append(_clean_block('''
                 <div class="quiz-navigation">
                     <button class="quiz-nav-previous" style="display: none;">Previous</button>  
-                    <span class="quiz-status-text"></span>
                     <button class="quiz-nav-next">Next</button>
                     <button class="quiz-nav-submit">Submit</button>
                 </div>

@@ -39,7 +39,7 @@ function initializeQuiz(container) {
     const progressBarContainer = container.querySelector(".quiz-progress-container");
     const resultsDiv = container.querySelector(".quiz-results");
     const navContainer = container.querySelector(".quiz-navigation");
-
+    const quizHeader = container.querySelector(".quiz-header");
     // Layout & Feedback Detection
     const layout = container.getAttribute("data-layout") || "book";
     const feedbackType = container.getAttribute("data-feedback-mode");
@@ -56,7 +56,10 @@ function initializeQuiz(container) {
     const mainWrapper = container.querySelector(".quiz-main-wrapper");
     const timerDisplayContainer = container.querySelector(".quiz-timer-display");
     const timeDisplaySpan = container.querySelector("#time-display");
+    const hasInitialTimer = container.getAttribute('data-timer') ? true : false;
+    
 
+    
     // Timer State
     const timeLimitSeconds = parseInt(container.getAttribute('data-timer'), 10);
     let timeLeft = isNaN(timeLimitSeconds) ? null : timeLimitSeconds;
@@ -76,6 +79,11 @@ function initializeQuiz(container) {
     const shouldShuffle = container.getAttribute("data-shuffle-questions") === "true";
     const allow_back = container.getAttribute("data-allow-back") ? container.getAttribute("data-allow-back") === "true" : true;
 
+    // header logic
+    if(layout == "list" && !hasInitialTimer){
+        console.log("mor");
+        quizHeader.classList.add("invisible-header");
+    }
     // --- INITIALIZATION ORDER LOGIC ---
     if (shouldShuffle) {
         questionOrder = shuffleQuestionOrder(container, questions);
@@ -161,7 +169,7 @@ function initializeQuiz(container) {
         if (layout === "list") {
             // --- LIST MODE LOGIC ---
             questions.forEach(q => q.style.display = "none");
-            header.style.position = 'sticky';
+    
             
             questionOrder.forEach((actualIndex) => {
                 const q = questions[actualIndex];
@@ -195,8 +203,6 @@ function initializeQuiz(container) {
             }
         }
         else {
-            header.style.position = 'relative';
-            header.style.top = 'auto';
             // --- BOOK MODE LOGIC ---
             const currentSessionLength = questionOrder.length;
             const actualIndex = questionOrder[currentIndex];
@@ -286,14 +292,22 @@ function initializeQuiz(container) {
         const doPartialRetake = !forceFullReset && wrongQuestionIndices.length > 0;
 
         currentIndex = 0;
-
         if (doPartialRetake) {
+            container.classList.remove('quiz-results-shown');
+            timerDisplayContainer.style.display = 'none';
+            if(layout == "list"){
+                quizHeader.classList.add("invisible-header");
+            }
             container.scrollIntoView({ behavior: 'smooth', block: 'start' });
             isRetakeMode = true;
             questionOrder = [...wrongQuestionIndices];
             timeLeft = null;
             if (timerDisplayContainer) timerDisplayContainer.style.display = 'none';
         } else {
+            container.classList.remove('quiz-results-shown');
+            if(hasInitialTimer){
+                quizHeader.classList.remove('invisible-header');
+            }
             isRetakeMode = false;
             timeLeft = isNaN(timeLimitSeconds) ? null : timeLimitSeconds;
             if (timeLeft !== null && timeLeft > 0) {
