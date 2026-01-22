@@ -73,6 +73,8 @@ pip install mkdocs
     The [x] marks a correct answer.
     <br>
     The [ ] marks an incorrect answer.
+    <br>
+    * Originally there is no space between the brackets for an incorrect answer, but it is accepted if added.
 
 !!! Sepparation
     Sepparation between questions in a quiz is made by adding  ``` --- ```
@@ -96,6 +98,7 @@ The following keywords can be used to control the behavior of the quiz.
 | `@feedback_mode: <end/immediate>` | `immediate` shows results after each question, `end` reveals results only upon final submission. | `end`                                             |
 | `@shuffle_questions: <true/false>` | Randomizes the order of questions to prevent memorization.                                   | `false`                                           |
 | `@time_limit: <seconds>` | Sets a countdown timer in seconds.                                                                      | Hidden if not provided.                           |
+| `@required_score: <number>`  | Sets a minimum score threshold required to "pass" the quiz. | Hidden if not provided.                                            | 
 | `@allow_back: <true/false>` | Allows the user to go back to previous questions.                                                     | `true`                                            |
 | `@explanation: <text>`  | Provides context for the correct answer during feedback.                                                | N/A                                               |
 

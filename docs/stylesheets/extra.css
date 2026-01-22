@@ -1,0 +1,35 @@
+:root {
+    --md-admonition-icon--tags: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5.5 7A1.5 1.5 0 0 1 7 5.5 1.5 1.5 0 0 1 5.5 4 1.5 1.5 0 0 1 4 5.5 1.5 1.5 0 0 1 5.5 7m15.41 9.33-9.08-9.09a2.94 2.94 0 0 0-4.14 0l-6.1,6.1a2.92 2.92 0 0 0 0 4.14l9.09,9.09a2.94 2.94 0 0 0 4.14,0l6.1-6.1a2.92 2.92 0 0 0 0-4.14Z"/></svg>');
+    --md-admonition-icon--answers: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2m-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9Z"/></svg>');
+    --md-admonition-icon--sepparation: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11 19V5h2v14h-2Z"/></svg>');
+}
+
+.md-typeset .admonition.tags,
+.md-typeset .admonition.answers,
+.md-typeset .admonition.sepparation, 
+.md-typeset .admonition.note {
+    border-color: var(--md-accent-fg-color);
+    background-color: transparent;
+}
+
+.md-typeset .admonition.tags .md-admonition__title,
+.md-typeset .admonition.answers .md-admonition__title,
+.md-typeset .admonition.sepparation .md-admonition__title,
+.md-typeset .admonition.note .md-admonition__title {
+    background-color: transparent;
+    color: var(--md-accent-fg-color);
+}
+
+.md-typeset .admonition.tags .md-admonition__icon,
+.md-typeset .admonition.answers .md-admonition__icon,
+.md-typeset .admonition.sepparation .md-admonition__icon,
+.md-typeset .admonition.note .md-admonition__icon {
+    color: var(--md-accent-fg-color);
+}
+
+.md-typeset .admonition.tags .md-admonition__icon svg,
+.md-typeset .admonition.answers .md-admonition__icon svg,
+.md-typeset .admonition.sepparation .md-admonition__icon svg,
+.md-typeset .admonition.note .md-admonition__icon svg {
+    fill: var(--md-accent-fg-color);
+}
