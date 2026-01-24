@@ -12,7 +12,7 @@
 
     /* Typography */
     --quiz-text-title: var(--md-primary-fg-color, #3066ae);
-    --quiz-text-desc: var(--md-typeset-color, #1976d2);
+    --quiz-text-desc: var(--md-primary-fg-color, #1976d2);
     --quiz-text-question: var(--md-typeset-color, #000000);
     --quiz-text-body: var(--md-typeset-color, #000000);
     --quiz-text-timer: var(--md-typeset-color, #000000);
@@ -211,11 +211,18 @@
 }
 
 .quiz-description {
-    font-size: 1.1rem;
-    line-height: 1.6;
-    color: var(--quiz-text-desc);
+    text-align: center;
     margin-bottom: 2rem;
-    padding: 0 20px;
+    display: block;
+}
+
+.custom-quiz-desc {
+    color: var( --quiz-text-desc);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif ;
+    font-size: 1.0rem ;
+    font-weight: 350;
+    text-align: center;
+    display: block ;
 }
 
 /* =============================================================================

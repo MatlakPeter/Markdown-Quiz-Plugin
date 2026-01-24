@@ -117,7 +117,7 @@ class QuizPlugin(BasePlugin):
             parts.append(
                 f'''
                 <div class="quiz-description">
-                    <p>{meta["description"]}</p>
+                    <span class="custom-quiz-desc">{meta["description"]}</span>
                 </div>
                 '''
             )
