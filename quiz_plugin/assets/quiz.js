@@ -1105,8 +1105,48 @@ function shuffleQuestionOrder(container, questions) {
     return indices;
 }
 
+function syncButtonSizes(container) {
+    const standardItems = container.querySelectorAll('.quiz-answer, .quiz-order-item');
+    if (standardItems.length === 0) return;
+
+    standardItems.forEach(item => {
+        item.style.width = 'auto';
+        item.style.height = 'auto';
+        item.style.whiteSpace = 'nowrap'; 
+    });
+
+    const containerWidth = container.offsetWidth;
+    let maxWidth = 0;
+    let maxHeight = 0;
+
+    standardItems.forEach(item => {
+        const w = item.offsetWidth + 10; 
+        if (w > maxWidth) maxWidth = w;
+    });
+
+    const isMatching = container.querySelector('.quiz-matching-container') !== null;
+    const shouldStack = !isMatching && maxWidth > (containerWidth * 0.75);
+    const finalWidth = shouldStack ? '100%' : `${maxWidth}px`;
+
+    standardItems.forEach(item => {
+        item.style.width = isMatching ? '100%' : finalWidth;
+        item.style.whiteSpace = 'normal'; 
+    });
+
+    standardItems.forEach(item => {
+        const h = item.scrollHeight;
+        if (h > maxHeight) maxHeight = h;
+    });
+
+    standardItems.forEach(item => {
+        item.style.height = `${maxHeight + 10}px`; 
+    });
+}
+
 function triggerMathJax() {
     if (window.MathJax && window.MathJax.typesetPromise) {
-        window.MathJax.typesetPromise();
+        window.MathJax.typesetPromise().then(() => {
+            document.querySelectorAll('.quiz-answer-container').forEach(syncButtonSizes);
+        });
     }
 }
