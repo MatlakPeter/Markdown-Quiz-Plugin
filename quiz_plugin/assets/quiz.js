@@ -58,8 +58,6 @@ function initializeQuiz(container) {
     const timeDisplaySpan = container.querySelector("#time-display");
     const hasInitialTimer = container.getAttribute('data-timer') ? true : false;
     
-
-    
     // Timer State
     const timeLimitSeconds = parseInt(container.getAttribute('data-timer'), 10);
     let timeLeft = isNaN(timeLimitSeconds) ? null : timeLimitSeconds;
@@ -80,7 +78,7 @@ function initializeQuiz(container) {
     const allow_back = container.getAttribute("data-allow-back") ? container.getAttribute("data-allow-back") === "true" : true;
 
     // header logic
-    if(layout == "list" && !hasInitialTimer){
+    if (layout == "list" && !hasInitialTimer) {
         console.log("mor");
         quizHeader.classList.add("invisible-header");
     }
@@ -169,8 +167,7 @@ function initializeQuiz(container) {
         if (layout === "list") {
             // --- LIST MODE LOGIC ---
             questions.forEach(q => q.style.display = "none");
-    
-            
+
             questionOrder.forEach((actualIndex) => {
                 const q = questions[actualIndex];
                 q.style.display = "block";
@@ -295,7 +292,7 @@ function initializeQuiz(container) {
         if (doPartialRetake) {
             container.classList.remove('quiz-results-shown');
             timerDisplayContainer.style.display = 'none';
-            if(layout == "list"){
+            if (layout == "list") {
                 quizHeader.classList.add("invisible-header");
             }
             container.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -305,7 +302,7 @@ function initializeQuiz(container) {
             if (timerDisplayContainer) timerDisplayContainer.style.display = 'none';
         } else {
             container.classList.remove('quiz-results-shown');
-            if(hasInitialTimer){
+            if (hasInitialTimer) {
                 quizHeader.classList.remove('invisible-header');
             }
             isRetakeMode = false;
@@ -794,7 +791,7 @@ function generateReport(container, timeTakenSeconds, questionOrder, questions, i
         ? `<p style="font-size: 1em; margin-bottom: 20px;">Time Taken: <strong>${timeTakenDisplay}</strong></p>`
         : `<p style="font-size: 1em; margin-bottom: 20px;"> </p>`;
 
-    const timeExpiredHtml = timeExpired 
+    const timeExpiredHtml = timeExpired
         ? `<p style="font-size: 1em; margin-bottom: 20px;"> Time is up! </p>`
         : `<p style="font-size: 1em; margin-bottom: 20px;"> </p>`;
 
@@ -933,7 +930,7 @@ function reportOrdering(questionElement, index, feedbackEnd = true) {
     const userOrder = `<div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 5px;">` +
         items.map((item, pos) => {
             const isCorrect = Number(item.dataset.correctOrder) === pos + 1;
-            const color = isCorrect ?  "var(--quiz-report-correct)" : "var(--quiz-report-incorrect)";
+            const color = isCorrect ? "var(--quiz-report-correct)" : "var(--quiz-report-incorrect)";
             return `<span class="report-order-item" style="color: ${color};">${item.innerHTML}</span>`;
         }).join("") + `</div>`;
 
@@ -1112,34 +1109,30 @@ function syncButtonSizes(container) {
     standardItems.forEach(item => {
         item.style.width = 'auto';
         item.style.height = 'auto';
-        item.style.whiteSpace = 'nowrap'; 
+        item.style.display = 'inline-flex';
     });
 
-    const containerWidth = container.offsetWidth;
     let maxWidth = 0;
     let maxHeight = 0;
 
     standardItems.forEach(item => {
-        const w = item.offsetWidth + 10; 
+        const w = item.offsetWidth + 2;
         if (w > maxWidth) maxWidth = w;
     });
 
-    const isMatching = container.querySelector('.quiz-matching-container') !== null;
-    const shouldStack = !isMatching && maxWidth > (containerWidth * 0.75);
+    const containerWidth = container.offsetWidth;
+    const shouldStack = maxWidth > (containerWidth * 0.85);
     const finalWidth = shouldStack ? '100%' : `${maxWidth}px`;
 
     standardItems.forEach(item => {
-        item.style.width = isMatching ? '100%' : finalWidth;
-        item.style.whiteSpace = 'normal'; 
-    });
-
-    standardItems.forEach(item => {
+        item.style.width = finalWidth;
         const h = item.scrollHeight;
         if (h > maxHeight) maxHeight = h;
     });
 
     standardItems.forEach(item => {
-        item.style.height = `${maxHeight + 10}px`; 
+        item.style.height = `${maxHeight}px`;
+        item.style.display = 'flex';
     });
 }
 
