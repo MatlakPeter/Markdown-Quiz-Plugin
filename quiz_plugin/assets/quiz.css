@@ -310,17 +310,21 @@
 .quiz-answer.correct {
     background-color: #28a745;
     color: white;
-    border: 2px solid #1e7e34;
+    box-shadow: inset 0 0 0 2px #1e7e34; 
+    border-color: transparent;
 }
 
 .quiz-answer.incorrect {
     background-color: #dc3545;
     color: white;
-    border: 2px solid #b02a37;
+    box-shadow: inset 0 0 0 2px #b02a37;
+    border-color: transparent;
 }
 
 .quiz-answer.shouldbecorrect {
-    border: 2px solid green;
+    box-shadow: inset 0 0 0 2px green;
+    border-color: transparent; 
+    background-color: var(--quiz-bg-card);
 }
 
 /* dropdown container */
@@ -581,7 +585,7 @@
 
 .quiz-header {
     position: sticky;
-    z-index: 100;
+    z-index: 1;
     top: calc(var(--md-header-height, 48px) - 1px);
     background-color: var(--quiz-bg-meta);
     border-bottom: 1px solid var(--quiz-border);
