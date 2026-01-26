@@ -1,46 +1,197 @@
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eu lobortis justo, at bibendum odio. In tincidunt purus at massa porttitor pellentesque. Nullam ac nulla justo. Sed at felis vitae nunc pellentesque accumsan ut non ligula. Nulla facilisi. Vivamus efficitur tortor ac felis placerat blandit. Etiam feugiat nisi sit amet metus fermentum ultrices. In elit turpis, rutrum a gravida at, suscipit eget metus.
-
-Cras fringilla ac augue at porta. Donec imperdiet arcu erat, maximus auctor sem aliquam at. Duis viverra porta bibendum. In gravida neque nec odio malesuada, a gravida libero luctus. Proin quis laoreet lectus. Aenean congue gravida metus, nec consectetur orci elementum non. Sed non sollicitudin erat, ac molestie sapien. Vestibulum pellentesque felis quis velit dictum dignissim. Nullam volutpat dapibus ex, eget convallis dolor. Curabitur iaculis sagittis varius.
-
-Pellentesque tempor rutrum ligula, aliquam condimentum purus. Cras luctus tempus ipsum eu convallis. Nullam at nunc aliquet nisi lobortis luctus eu vel lorem. Nulla semper fringilla lorem eu efficitur. Proin eget libero maximus, pharetra est quis, pellentesque elit. Fusce pulvinar diam nec tortor blandit, quis finibus diam hendrerit. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. In hac habitasse platea dictumst. Etiam sit amet nulla a nibh vehicula tristique. Cras interdum eleifend eros at lacinia. Nulla tempus sapien purus, vitae imperdiet turpis porta eget. Sed mattis et ipsum non interdum. Nullam in nisl a lectus maximus congue. Donec mollis nunc et condimentum pulvinar.
-
-## Test for reference
-
-The capital of France is Paris.
-
-Vestibulum et scelerisque metus, sit amet varius odio. Aenean molestie nibh ac mauris auctor convallis. Aliquam consectetur auctor scelerisque. Aenean rutrum dictum ante non auctor. Sed augue tellus, eleifend et tempor id, rhoncus eget leo. Proin consequat nisi laoreet nisl suscipit, id aliquam leo porttitor. Integer sollicitudin nulla nec est facilisis tristique. Vivamus quis quam faucibus, scelerisque metus sed, efficitur dui. Vivamus tristique dapibus sem, eget finibus arcu tincidunt commodo. Nam porttitor orci quis nulla venenatis, ac efficitur felis auctor. Aliquam id scelerisque augue, eget fringilla quam.
-
-Quisque porttitor lorem id ultrices facilisis. Duis hendrerit mauris et mauris malesuada ornare. Praesent ac eros fringilla, placerat lorem ut, gravida velit. Aenean nec euismod ante. Nullam blandit neque at mauris faucibus sollicitudin. Fusce et massa in eros fermentum molestie. Donec tortor purus, porttitor ac neque vitae, tincidunt mattis mauris. Pellentesque elementum consectetur commodo. Etiam a vehicula diam, eu commodo nulla. Donec in ornare tortor, a dignissim libero. Sed eu convallis elit, nec consequat dolor. Cras sollicitudin scelerisque interdum. Nulla sit amet aliquam enim, ut tempus urna. Pellentesque volutpat, sem a aliquet viverra, sem dolor aliquet dolor, sit amet feugiat nibh neque fringilla sem. Pellentesque rhoncus a erat ultrices scelerisque. 
-
 @START
-@time_limit: 100
-@title: my quiz
-@shuffle_questions: true
+@title: Markdown Syntax Project
+@description: A journey through the creation of our extended syntax plugin.
+@time_limit: 5400
+@layout: book
+@allow_back: true
 @feedback_mode: immediate
+@shuffle_questions: false
+@shuffle_answers: true
+@author: The Epic Leader
+
 ---
-What is 2 + 2?
-[] 3
-[x] 4
-[] 5
+
+Are you looking forward to hear more about the markdown syntax team and our work?
+[x] YES
+[ ] NO
+
+@explanation: 
+Great! Observation: Even if you selected "No", you will have to listen to the rest of the presentation:))
+
 ---
-What is the capital of France?
-[x] Paris
-[] London
-[] Berlin
-@explanation: You can find the answer in [this chapter](#test-for-reference).
+
+Who has worked on this epic?
+[x] Péter
+[x] Olaya
+[x] Raul
+[x] Mădă
+
 ---
+
+Match the team members to their contributions during this project:
+
+{Péter (Epic Leader) | Syntax Creation & Implementation}
+{Olaya, Raul, Mădă | Initial Brainstorming & Ideation}
+
+@explanation: 
+While the whole team (Olaya, Raul, Mădă) was crucial for the initial brainstorming and idea generation, the actual implementation and syntax design was handled solo by the "Epic Leader" to ensure consistency.
+
+---
+
+Put the project workflow phases in the correct chronological order:
+
+(1.) Definition of Requirements
+(2.) Team Brainstorming Session
+(3.) Solo Development of Syntax Logic
+(4.) Documentation Updates
+
+@explanation: 
+The workflow evolved quickly. We started with a group effort to generate ideas. However, after the first couple of weeks, the project shifted to a solo effort to streamline the complex syntax logic.
+
+---
+
+Are you looking forward to the technical details?
+[x] YES
+[ ] NO
+
+@explanation:
+Sorry, NO is not an option:))
+
+---
+
+If you write the following in our markdown file:
+`[x] Left midfielder`
+
+How will this specific line be rendered to the user?
+
+[x] As a checked checkbox (Correct Answer)
+[ ] As an empty checkbox
+[ ] As a clickable button
+[ ] As a text input field
+
+@explanation: 
+This is the core of the Single Choice syntax. We designed it to mimic standard checkbox behavior but parsed into an interactive quiz element.
+
+---
+
+We wanted a compact way to offer choices inline.
+If you type: `The sky is { {blue|red|green} }.`
+
+Which of the following statements is TRUE about the rendering?
+
+[x] It creates a dropdown menu, and "blue" is automatically set as the correct answer.
+[ ] It creates three radio buttons side-by-side.
+[ ] It creates a dropdown, but you must specify the correct answer with an asterisk.
+
+@explanation: 
+We implemented the syntax `{{correct|option|option}}`. The parser automatically identifies the first item in the list as the correct answer, simplifying the quiz creation process for teachers.
+
+---
+
+How do we define the "Matching" pairs (like the team roles slide you saw earlier)?
+
+[x] `{ Option A | Match A }`
+[ ] `[ Option A -> Match A ]`
+[ ] `< Option A, Match A >`
+
+@explanation: 
+We chose curly braces `{}` with a pipe `|` separator. This keeps the syntax clean and distinct from standard Markdown links or images.
+
+---
+
+Can we include images in our quizzes to make them visual?
+
+[x] Yes, just use standard Markdown image syntax `‎!‎[Al‎t]‎(‎u‎rl‎)‎` before the options.
+[ ] No, images are forbidden.
+[ ] Only if you use complex HTML `<img>` tags.
+
+@explanation: 
+It's seamless! You simply place a standard image tag `![Alt Text](/image.png)` before the question options. The plugin automatically recognizes it as a "Picture Quiz."
+
+---
+
+To create an ordering question (like the Timeline slide earlier), which syntax did we settle on?
+
+[x] `(1.) First Item`
+[ ] `1. First Item`
+[ ] `[1] First Item`
+[ ] `> 1. First Item`
+
+@explanation: 
+We chose `(1.)` with parentheses to distinguish it clearly from standard Markdown ordered lists. This ensures the parser knows exactly when a "Drag and Drop" ordering question begins.
+
+---
+
+What tag is responsible for showing this specific text block (the one you are reading right now)?
+
+[x] `@explanation:`
+[ ] `@answer:`
+[ ] `@feedback:`
+[ ] `@hint:`
+
+@explanation: 
+The `@explanation:` tag allows instructors to provide context, sources, or witty remarks immediately after a student answers, making the quiz a learning tool, not just a test.
+
+---
+
+How did we set the 5400-second timer for this presentation?
+
+[x] `@time_limit: 5400`
+[ ] `@timer: 5400`
+[ ] `@countdown: 5400`
+
+@explanation: 
+Global configurations like `@time_limit`, `@title`, and `@layout` live at the very top of the file. They control the behavior of the entire quiz session.
+
+---
+
+Can we proceed to reflect on the project?
+[x] YES
+
+@explanation: Now we've made your choice easy:))
+
+---
+
+What was identified as the Hardest Part of this project?
+
+[ ] Writing the parser code itself
+[ ] Designing the CSS for the frontend
+[x] Creating a clear, definitive, and logical syntax system
+[ ] Getting the team to agree on ideas
+
+@explanation: 
+The biggest hurdle wasn't the code—it was the logic. We needed a system that was simple for users to write but rigorous enough to cover all edge cases (definitive and clear).
+
+---
+
+Conversely, which part of the project went surprisingly smoothly?
+
+[x] The momentum once the basics were established
+[ ] keeping the documentation up to date
+[ ] Communication regarding minor changes
+
+@explanation: 
+Once the foundational logic was set, the rest was "pretty easy." The difficult part was just getting that initial system perfect.
+
+---
+
+What was the most significant non-technical challenge faced during development?
+
+[ ] Learning new programming languages
+[x] Communication & Documentation maintenance
+[ ] The time limit for the project
+[ ] Hardware issues
+
+@explanation: 
+Keeping the documentation synchronized with every minor change in the syntax, and communicating those changes to the wider group, proved to be the main friction point.
+
+---
+
+Does this plugin allow for a fully interactive presentation entirely in Markdown?
+
+[x] Yes (You are looking at it!)
+[ ] No
+
+@explanation: 
+Thank you for listening!
 @END
-
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eu lobortis justo, at bibendum odio. In tincidunt purus at massa porttitor pellentesque. Nullam ac nulla justo. Sed at felis vitae nunc pellentesque accumsan ut non ligula. Nulla facilisi. Vivamus efficitur tortor ac felis placerat blandit. Etiam feugiat nisi sit amet metus fermentum ultrices. In elit turpis, rutrum a gravida at, suscipit eget metus.
-
-Cras fringilla ac augue at porta. Donec imperdiet arcu erat, maximus auctor sem aliquam at. Duis viverra porta bibendum. In gravida neque nec odio malesuada, a gravida libero luctus. Proin quis laoreet lectus. Aenean congue gravida metus, nec consectetur orci elementum non. Sed non sollicitudin erat, ac molestie sapien. Vestibulum pellentesque felis quis velit dictum dignissim. Nullam volutpat dapibus ex, eget convallis dolor. Curabitur iaculis sagittis varius.
-
-Pellentesque tempor rutrum ligula, aliquam condimentum purus. Cras luctus tempus ipsum eu convallis. Nullam at nunc aliquet nisi lobortis luctus eu vel lorem. Nulla semper fringilla lorem eu efficitur. Proin eget libero maximus, pharetra est quis, pellentesque elit. Fusce pulvinar diam nec tortor blandit, quis finibus diam hendrerit. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. In hac habitasse platea dictumst. Etiam sit amet nulla a nibh vehicula tristique. Cras interdum eleifend eros at lacinia. Nulla tempus sapien purus, vitae imperdiet turpis porta eget. Sed mattis et ipsum non interdum. Nullam in nisl a lectus maximus congue. Donec mollis nunc et condimentum pulvinar.
-
-Vestibulum et scelerisque metus, sit amet varius odio. Aenean molestie nibh ac mauris auctor convallis. Aliquam consectetur auctor scelerisque. Aenean rutrum dictum ante non auctor. Sed augue tellus, eleifend et tempor id, rhoncus eget leo. Proin consequat nisi laoreet nisl suscipit, id aliquam leo porttitor. Integer sollicitudin nulla nec est facilisis tristique. Vivamus quis quam faucibus, scelerisque metus sed, efficitur dui. Vivamus tristique dapibus sem, eget finibus arcu tincidunt commodo. Nam porttitor orci quis nulla venenatis, ac efficitur felis auctor. Aliquam id scelerisque augue, eget fringilla quam.
-
-Quisque porttitor lorem id ultrices facilisis. Duis hendrerit mauris et mauris malesuada ornare. Praesent ac eros fringilla, placerat lorem ut, gravida velit. Aenean nec euismod ante. Nullam blandit neque at mauris faucibus sollicitudin. Fusce et massa in eros fermentum molestie. Donec tortor purus, porttitor ac neque vitae, tincidunt mattis mauris. Pellentesque elementum consectetur commodo. Etiam a vehicula diam, eu commodo nulla. Donec in ornare tortor, a dignissim libero. Sed eu convallis elit, nec consequat dolor. Cras sollicitudin scelerisque interdum. Nulla sit amet aliquam enim, ut tempus urna. Pellentesque volutpat, sem a aliquet viverra, sem dolor aliquet dolor, sit amet feugiat nibh neque fringilla sem. Pellentesque rhoncus a erat ultrices scelerisque. 
-
-@dasjbdjas
-@include: file=quiz.md, id=easy, basics_python

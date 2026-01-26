@@ -1,3 +1,45 @@
-site_name: nice
+site_name: Quiz Plugin
+
 plugins:
-        - quiz
+    - search
+    - quiz
+
+
+# Activate PyMdown Extensions here
+markdown_extensions:
+  - pymdownx.superfences    # Better code blocks (nesting, etc.)
+  - pymdownx.highlight:     # Syntax highlighting
+      anchor_linenums: true
+  - pymdownx.tabbed:        # Content tabs
+      alternate_style: true 
+  - admonition
+  - pymdownx.details
+
+# theme:
+#   name: readthedocs
+
+theme:
+  name: material
+  palette: 
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: brown
+      accent: orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.code.copy
+
+watch:
+    - quiz_plugin
