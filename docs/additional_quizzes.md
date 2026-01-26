@@ -8,36 +8,37 @@ The Markdown Quiz Plugin is a powerful, lightweight extension that transforms yo
 @author: Maniu Diana
 @id: interactive-introduction
 @title: Interactive Introduction
-@description: Click through these questions to learn what the plugin does, who it’s for, and why it’s useful.
+@description:Learn what the plugin does, who it’s for, and why it’s useful.
 @feedback_mode: immediate
 @shuffle_questions: false
+
 Which of the following are key benefits of using the Markdown Quiz Plugin? (Select all that apply)
 [x] Easy integration into an existing Markdown workflow
 [x] Interactive learning and better engagement
 [x] Instant feedback for learners
-[x] Version-control friendly (works well with Git)
-[x] Lightweight and fast
-[x] Customizable to match your docs theme
-[x] Accessible by design
-[x] No external dependencies required
+[x] Customizable design
 [ ] Requires a separate backend service to run quizzes
 [ ] Only works outside of MkDocs
+
+---
+
 Who is the plugin addressed to? (Select all that apply)
 [x] Educators & trainers
 [x] Technical writers
-[x] Content creators
 [x] Developers
-[x] Course creators
 [x] Team leads
 [x] Anyone writing in Markdown
 [ ] Only professional designers
 [ ] Only database administrators
+
+---
+
 Match each audience to a typical use case:
 {Educators & trainers | Create interactive learning materials for students and workshop participants}
 {Technical writers | Add knowledge checks to technical documentation}
 {Developers | Build interactive onboarding and API documentation}
-{Course creators | Design self-paced modules with embedded assessments}
 {Team leads | Create internal training and knowledge verification}
+
 @END
 
 
@@ -57,10 +58,10 @@ What symbol is used to create a heading in Markdown?
 ---
 
 Which of the following creates bold text in Markdown?
-[x] **bold**
-[ ] *bold*
-[ ] _bold_
-[ ] `bold`
+[x] ‎**bold**
+[ ] ‎*bold*
+[ ] ‎_bold_
+[ ] ‎`bold`
 
 ---
 
@@ -71,6 +72,7 @@ How do you create a code block in Markdown?
 [ ] Using parentheses
 
 @END
+
 
 @START
 @id: markdown-lists
@@ -100,36 +102,5 @@ What creates a nested list item in Markdown?
 [ ] Using different symbols
 [ ] Using brackets
 [ ] Using parentheses
-
-@END
-
-@START
-@id: markdown-links
-@title: Markdown Links and Images
-@description: Test your understanding of links and images in Markdown
-@layout: list
-@shuffle_questions: true
-
-What is the correct syntax for a Markdown link?
-[x] [text](url)
-[ ] (text)[url]
-[ ] {text}(url)
-[ ] <text>(url)
-
----
-
-How do you create an image in Markdown?
-[x] ![alt text](image-url)
-[ ] [alt text](image-url)
-[ ] (alt text)[image-url]
-[ ] <alt text>(image-url)
-
----
-
-What is the purpose of the alt text in a Markdown image?
-[x] It provides alternative text for accessibility
-[ ] It sets the image size
-[ ] It changes the image color
-[ ] It creates a caption
 
 @END

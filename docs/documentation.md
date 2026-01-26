@@ -666,7 +666,7 @@ Complete Quiz Example
     [x] Green
     [ ] Purple
     [ ] Burgundy
-    @explanation: See a demo [here](../#short-description)
+    @explanation: See a demo [here](../additional_quizzes/#short-description)
     @END
     ```
 
@@ -680,7 +680,7 @@ Complete Quiz Example
     [x] Green
     [ ] Purple
     [ ] Burgundy
-    @explanation: See a demo [here](../#short-description)
+    @explanation: See a demo [here](../additional_quizzes/#short-description)
     @END
     ```
 
@@ -693,7 +693,7 @@ Complete Quiz Example
     [x] Green
     [ ] Purple
     [ ] Burgundy
-    @explanation: See a demo <a href="../additional_quizzes/#short-description">here</a>
+    @explanation: See a demo [here](../additional_quizzes/#short-description)
     @END
 
 
@@ -702,29 +702,11 @@ Complete Quiz Example
 
 <br>
 
----
-
-**Styling Links**
-
-Useful for longer explanations or repeated links.
-
-```
-@explanation: The correct order is explained here [details][planets].
-```
-
-Instead of writing the reference in the explanation, you can define it as below: 
-
-```
-[planets]: lecture_notes.md#order-of-the-planets
-```
-
-<br>
 
 ### Multiple Quizzes in Mkdown Files
 
 It is possible to have multiple quizzes in a markdown file. Additionally, you can include quizzes from other markdown files using the `@include` directive. This allows you to organize quizzes in separate files and reuse them across your documentation.
 
-**Syntax:**
 
 There is a single line of code:
 
@@ -756,7 +738,7 @@ To include multiple quizzes from the same file, list their IDs separated by comm
     ```
 
 === "Rendered Quizzes"
-    @include: file=additional_quizzes.md, id=markdown-basics, markdown-lists, markdown-links
+    @include: file=additional_quizzes.md, id=markdown-basics, markdown-lists
 
 !!! Note
     Make sure each quiz in the source file has a unique `@id:` identifier. The file path is relative to the current markdown file.
