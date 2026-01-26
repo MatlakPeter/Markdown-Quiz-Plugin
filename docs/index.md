@@ -64,7 +64,7 @@ If you write the following in our markdown file:
 
 How will this specific line be rendered to the user?
 
-[x] As a checked checkbox (Correct Answer)
+[x] As a checked checkbox
 [ ] As an empty checkbox
 [ ] As a clickable button
 [ ] As a text input field
@@ -90,9 +90,9 @@ We implemented the syntax `{{correct|option|option}}`. The parser automatically 
 
 How do we define the "Matching" pairs (like the team roles slide you saw earlier)?
 
-[x] `{ Option A | Match A }`
-[ ] `[ Option A -> Match A ]`
-[ ] `< Option A, Match A >`
+[x] { Option A | Match A }
+[ ] [ Option A -> Match A ]
+[ ] < Option A, Match A >
 
 @explanation: 
 We chose curly braces `{}` with a pipe `|` separator. This keeps the syntax clean and distinct from standard Markdown links or images.
@@ -112,62 +112,46 @@ It's seamless! You simply place a standard image tag `![Alt Text](/image.png)` b
 
 To create an ordering question (like the Timeline slide earlier), which syntax did we settle on?
 
-[x] `(1.) First Item`
-[ ] `1. First Item`
-[ ] `[1] First Item`
-[ ] `> 1. First Item`
+[x] (1.) First Item
+[ ] 1. First Item
+[ ] [1] First Item
+[ ] > 1. First Item
 
 @explanation: 
 We chose `(1.)` with parentheses to distinguish it clearly from standard Markdown ordered lists. This ensures the parser knows exactly when a "Drag and Drop" ordering question begins.
 
 ---
 
-What tag is responsible for showing this specific text block (the one you are reading right now)?
-
-[x] `@explanation:`
-[ ] `@answer:`
-[ ] `@feedback:`
-[ ] `@hint:`
-
-@explanation: 
-The `@explanation:` tag allows instructors to provide context, sources, or witty remarks immediately after a student answers, making the quiz a learning tool, not just a test.
-
----
-
 How did we set the 5400-second timer for this presentation?
 
-[x] `@time_limit: 5400`
-[ ] `@timer: 5400`
-[ ] `@countdown: 5400`
+[x] @time_limit: 5400
+[ ] @timer: 5400
+[ ] @countdown: 5400
 
 @explanation: 
 Global configurations like `@time_limit`, `@title`, and `@layout` live at the very top of the file. They control the behavior of the entire quiz session.
 
 ---
 
-Can we proceed to reflect on the project?
+Can we proceed to reflect on the epic?
 [x] YES
 
 @explanation: Now we've made your choice easy:))
 
 ---
 
-What was identified as the Hardest Part of this project?
+What was the Hardest Part of this project?
 
-[ ] Writing the parser code itself
-[ ] Designing the CSS for the frontend
-[x] Creating a clear, definitive, and logical syntax system
+[ ] Finding the keywords for certain functionalities
+[x] Defining the basics of the extended syntax
 [ ] Getting the team to agree on ideas
-
-@explanation: 
-The biggest hurdle wasn't the code—it was the logic. We needed a system that was simple for users to write but rigorous enough to cover all edge cases (definitive and clear).
 
 ---
 
 Conversely, which part of the project went surprisingly smoothly?
 
 [x] The momentum once the basics were established
-[ ] keeping the documentation up to date
+[ ] Keeping the documentation up to date
 [ ] Communication regarding minor changes
 
 @explanation: 
@@ -180,14 +164,14 @@ What was the most significant non-technical challenge faced during development?
 [ ] Learning new programming languages
 [x] Communication & Documentation maintenance
 [ ] The time limit for the project
-[ ] Hardware issues
+[ ] Using Git
 
 @explanation: 
 Keeping the documentation synchronized with every minor change in the syntax, and communicating those changes to the wider group, proved to be the main friction point.
 
 ---
 
-Does this plugin allow for a fully interactive presentation entirely in Markdown?
+Does this plugin allow for a fully interactive presentation entirely in Markdown (with some extensions)?
 
 [x] Yes (You are looking at it!)
 [ ] No
