@@ -48,7 +48,7 @@
 
     /* Typography */
     --quiz-text-title: var(--md-primary-fg-color--light, #93b9ef);
-    --quiz-text-desc: var(--md-typeset-color, #e2e2e2);
+    --quiz-text-desc: var(--md-primary-fg-color, #e2e2e2);
     --quiz-text-question: var(--md-typeset-color, #f8f9fa);
     --quiz-text-interactive: var(--md-accent-fg-color, #93b9ef);
     --quiz-text-status: var(--md-primary-fg-color--light, #93b9ef);

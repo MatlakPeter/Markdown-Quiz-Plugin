@@ -507,10 +507,12 @@ function handleCheckButton(btn, questionBlock) {
             if (isThisCorrect) {
                 dropdown.style.border = "2px solid #1e7e34";
                 dropdown.style.backgroundColor = "#28a745";
+                dropdown.style.color = "white";
             } else {
                 dropdown.style.border = "2px solid #b02a37";
                 dropdown.style.backgroundColor = "#dc3545";
                 totalIsCorrect = false;
+                dropdown.style.color = "white";
             }
         });
 
@@ -527,9 +529,11 @@ function handleCheckButton(btn, questionBlock) {
             if (Number(item.dataset.correctOrder) === pos + 1) {
                 item.style.backgroundColor = "#28a745";
                 item.style.border = "2px solid #1e7e34";
+                item.style.color = "white";
             } else {
                 item.style.border = "2px solid #b02a37";
                 item.style.backgroundColor = "#dc3545";
+                item.style.color = "white";
             }
         });
         ({ isCorrect, correctOrder } = reportOrdering(questionBlock, questionBlock.dataset.questionIndex, false))
