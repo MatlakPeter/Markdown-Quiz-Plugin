@@ -57,7 +57,7 @@ function initializeQuiz(container) {
     const timerDisplayContainer = container.querySelector(".quiz-timer-display");
     const timeDisplaySpan = container.querySelector("#time-display");
     const hasInitialTimer = container.getAttribute('data-timer') ? true : false;
-    
+
     // Timer State
     const timeLimitSeconds = parseInt(container.getAttribute('data-timer'), 10);
     let timeLeft = isNaN(timeLimitSeconds) ? null : timeLimitSeconds;
@@ -538,7 +538,7 @@ function handleCheckButton(btn, questionBlock) {
     else if (type === 'matching') {
         const solvedArea = questionBlock.querySelector('.quiz-match-solved-area')
         const userPairs = Array.from(solvedArea.querySelectorAll('.quiz-match-pair'));
-        let correctPairs = ""
+        let correctPairsFormatted;
         userPairs.forEach(pair => {
             pair.style.pointerEvents = 'none';
             if (pair.dataset.pairId === pair.dataset.userRight) {
@@ -550,10 +550,9 @@ function handleCheckButton(btn, questionBlock) {
         const remainingItems = questionBlock.querySelectorAll('.quiz-match-item');
         remainingItems.forEach(i => i.style.pointerEvents = 'none');
 
-        ({ isCorrect, correctPairs } = reportMatching(questionBlock, questionBlock.dataset.questionIndex, false))
-        if (!isCorrect) feedbackText = `Correct answer: ${correctPairs}`
+        ({isCorrect, correctPairsFormatted} = reportMatching(questionBlock, questionBlock.dataset.questionIndex, false));
+        if (!isCorrect) feedbackText = `Correct answer: ${correctPairsFormatted}`
     }
-
     let feedbackMsg = document.createElement('div');
     feedbackMsg.className = 'quiz-feedback-msg';
     questionBlock.appendChild(feedbackMsg);
@@ -565,7 +564,7 @@ function handleCheckButton(btn, questionBlock) {
         feedbackMsg.style.border = "1px solid #c3e6cb";
     } else {
         feedbackMsg.innerHTML = `<strong>Incorrect.</strong> <br>${feedbackText}`;
-        feedbackMsg.style.backgroundColor = "#f8d7da";
+        feedbackMsg.style.backgroundColor = "var(--quiz-feedback-incorrect-background)";
         feedbackMsg.style.color = "#dc3545";
         feedbackMsg.style.border = "1px solid #f5c6cb";
     }
@@ -997,10 +996,12 @@ function reportMatching(questionBlock, index, feedbackEnd = true) {
         }
     });
 
+     let color;
+     color = feedbackEnd === true ? "var(--quiz-report-correct)" : "#dc3545";
     // Generate the correct answer key for the report
     const correctPairsFormatted = leftItems.map(item => {
         const id = item.dataset.pairId;
-        return `<div style="color: var(--quiz-report-correct);">${leftLabel[id]} -- ${rightLabel[id]}</div>`;
+        return `<div style="color: ${color};">${leftLabel[id]} -- ${rightLabel[id]}</div>`;
     }).join("");
 
     const explanationHTML = extractExplanationHTML(questionBlock);
@@ -1008,8 +1009,7 @@ function reportMatching(questionBlock, index, feedbackEnd = true) {
     if (feedbackEnd) {
         return createReportCard(index, questionText, isCorrect, userPairsFormatted, correctPairsFormatted, explanationHTML);
     }
-
-    return { isCorrect };
+    return { isCorrect, correctPairsFormatted, explanationHTML };
 }
 
 function extractExplanationHTML(questionElement) {
