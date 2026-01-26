@@ -35,7 +35,7 @@ pip install mkdocs
     pip install -i https://test.pypi.org/simple/ mkdocs-quiz-plugin
     ```
 
-2.  **Create a new project**
+2.  **Open existing project / Create a new project**
 
     In the IDE terminal, automatically create a new project using the command:
     ```
@@ -62,126 +62,231 @@ pip install mkdocs
     mkdocs serve
     ```
 
+
 ### Writing your first quiz 
 
-**Important notes**
 
-!!! Tags
-    The only mandatory tags for a quiz to exist are ``` @START ``` and ``` @END ```.
+#### Step 1: The Simplest Quiz
 
-!!! Answers
-    The [x] marks a correct answer.
-    <br>
-    The [ ] marks an incorrect answer.
-    <br>
-    * Originally there is no space between the brackets for an incorrect answer, but it is accepted if added.
-
-!!! Sepparation
-    Sepparation between questions in a quiz is made by adding  ``` --- ```
- 
-
-<br>
-<br>
-
-**Key words defining Quiz Behaviour**
-
-The following keywords can be used to control the behavior of the quiz.
-
-| Keyword                 | Description                                                                                             | Default / Behavior                                |
-| ----------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `@START` / `@END`       | Marks the beginning and end of the interactive quiz block.                                              | N/A                                               |
-| `@id: <unique_name>`      | Assigns a unique identifier to a quiz instance, essential for referencing specific quizzes.             | N/A                                               |
-| `@include: file=file_name,  id=quiz_id` | Imports a specific quiz from an external file for reusability.                                          | N/A                                               |
-| `@title: <text>`        | Sets the main header for the quiz.                                                                      | Hidden if not provided.                           |
-| `@description: <text>`  | Sets the introductory instructions for the quiz.                                                        | Hidden if not provided.                           |
-| `@layout: <list/book>`  | Defines the quiz layout. `list` shows all questions vertically, `book` shows one question per slide.      | `book`                                            |
-| `@feedback_mode: <end/immediate>` | `immediate` shows results after each question, `end` reveals results only upon final submission. | `end`                                             |
-| `@shuffle_questions: <true/false>` | Randomizes the order of questions to prevent memorization.                                   | `false`                                           |
-| `@time_limit: <seconds>` | Sets a countdown timer in seconds.                                                                      | Hidden if not provided.                           |
-| `@required_score: <number>`  | Sets a minimum score threshold required to "pass" the quiz. | Hidden if not provided.                                            | 
-| `@allow_back: <true/false>` | Allows the user to go back to previous questions.                                                     | `true`                                            |
-| `@explanation: <text>`  | Provides context for the correct answer during feedback.                                                | N/A                                               |
-
-
-!!! Note
-    All parameters are global, except ``` @explanation ``` which is applied individually to each question.
-
-<br>
-<br>
-
-**Quiz Types**
-
-The quiz supports several types of questions:
-
-
-*   **Single Choice:** The user can select only one correct answer.
+Let's create your first quiz step by step! Every quiz requires **only two tags to exist**: a start tag and an end tag. See the example below:
 
 === "Code"
-
     ```
     ‎@START
-    @title: Single Choice Quiz
-
-    What is the command to install mkdocs?
-
-    [] pip install mkdocs-quiz-plugin
-    [x] pip install mkdocs
-    [] pip install python
-
-    @END
-    ```
-
-
-=== "Rendered Quiz"
-
-    @START
-    @title: Single Choice Quiz
-
-    What is the command to install mkdocs?
-    [] pip install mkdocs-quiz-plugin
-    [x] pip install mkdocs
-    [] pip install python
-
-    @END
-
-
-<br>
-
-*   **Multiple Choice:** The user can select multiple correct answers.
-
-=== "Code"
-
-    ```
-    ‎@START
-    @title: Multiple Choice Quiz
-
-    Which are the challanges in modern learning?
-    [] Poorly structured materials
-    [x] Passive reading
-    [] No feedback possibility
-    [x] Lack of interactive content
-
+    
+    What is 2 + 2?
+    [ ] 3
+    [x] 4
+    [ ] 5
+    
     @END
     ```
 
 === "Rendered Quiz"
-
     @START
-    @title: Multiple Choice Quiz
-
-    Which are the challanges in modern learning?
-    [] Poorly structured materials
-    [x] Passive reading
-    [] No feedback possibility
-    [x] Lack of interactive content
-
+    
+    What is 2 + 2?
+    [ ] 3
+    [x] 4
+    [ ] 5
+    
     @END
 
-<br>
+!!!Explanation
+    * `@START` and `@END` mark where your quiz begins and ends
+    * Write your question as plain text
+    * Use `[x]` to mark the **correct** answer
+    * Use `[ ]` to mark **incorrect** answers (the space is optional)
+
+Congratulations, you've created your first quiz! Try copying this into a markdown file and running `mkdocs serve` to see it in action.
+
+#### Step 2: Adding Title
+
+Make your quiz more professional by adding a title:
+
+=== "Code"
+    ```
+    ‎@START
+    @title: Math Basics Quiz
+    
+    What is 2 + 2?
+    [ ] 3
+    [x] 4
+    [ ] 5
+    
+    @END
+    ```
+
+=== "Rendered Quiz"
+    @START
+    @title: Math Basics Quiz
+    
+    What is 2 + 2?
+    [ ] 3
+    [x] 4
+    [ ] 5
+    
+    @END
+
+The `@title:` keyword adds a header above your quiz. This is optional but recommended for clarity.
+
+#### Step 3: Multiple Questions
+
+Add more questions by separating them with `---`:
+
+=== "Code"
+    ```
+    ‎@START
+    @title: Math Basics Quiz
+    
+    What is 2 + 2?
+    [ ] 3
+    [x] 4
+    [ ] 5
+    
+    ---
+    
+    What is 3 × 3?
+    [ ] 6
+    [ ] 8
+    [x] 9
+    
+    @END
+    ```
+
+=== "Rendered Quiz"
+    @START
+    @title: Math Basics Quiz
+    
+    What is 2 + 2?
+    [ ] 3
+    [x] 4
+    [ ] 5
+    
+    ---
+    
+    What is 3 × 3?
+    [ ] 6
+    [ ] 8
+    [x] 9
+    
+    @END
+
+!!! Remember
+    Use `---` on its own line to separate questions.
+
+#### Step 4: Multiple Correct Answers
+
+Sometimes questions have more than one correct answer. Just mark multiple options with `[x]`:
+
+=== "Code"
+    ```
+    ‎@START
+    @title: Programming Languages
+    
+    Which of these are programming languages? (Select all that apply)
+    [x] Python
+    [x] JavaScript
+    [ ] HTML
+    [x] Java
+    [ ] CSS
+    
+    @END
+    ```
+
+=== "Rendered Quiz"
+    @START
+    @title: Programming Languages
+    
+    Which of these are programming languages? (Select all that apply)
+    [x] Python
+    [x] JavaScript
+    [ ] HTML
+    [x] Java
+    [ ] CSS
+    
+    @END
+
+#### Step 5: Customizing Your Quiz
+
+You can customize how your quiz behaves using keywords. Here are the most useful ones:
+
+**Show all questions at once:**
+```
+@layout: list
+```
+
+**Show feedback immediately after each answer:**
+```
+@feedback_mode: immediate
+```
+
+**Add a timer (in seconds):**
+```
+@time_limit: 60
+```
+
+**Add instructions:**
+```
+@description: Complete all questions to test your knowledge.
+```
+
+Here's a complete example with customizations:
+
+=== "Code"
+    ```
+    ‎@START
+    @title: Quick Knowledge Check
+    @description: You have 30 seconds to answer both questions!
+    @layout: list
+    @feedback_mode: immediate
+    @time_limit: 30
+    
+    What is the capital of France?
+    [ ] London
+    [x] Paris
+    [ ] Berlin
+    
+    ---
+    
+    What is 5 × 5?
+    [ ] 20
+    [x] 25
+    [ ] 30
+    
+    @END
+    ```
+
+=== "Rendered Quiz"
+    @START
+    @title: Quick Knowledge Check
+    @description: You have 30 seconds to answer both questions!
+    @layout: list
+    @feedback_mode: immediate
+    @time_limit: 30
+    
+    What is the capital of France?
+    [ ] London
+    [x] Paris
+    [ ] Berlin
+    
+    ---
+    
+    What is 5 × 5?
+    [ ] 20
+    [x] 25
+    [ ] 30
+    
+    @END
+
+#### Step 6: Other Question Types
+
+The quiz plugin supports several other question types beyond multiple choice:
 
 *   **Dropdown:** The user selects the correct answer from a dropdown menu.
 
->* Note: The first answer in the list is automatically considered as the correct one!
+!!! Note
+    The first answer in the list is automatically considered as the correct one!
 
 === "Code"
 
@@ -270,7 +375,7 @@ The quiz supports several types of questions:
 
 *   **Picture Questions:**
 
-    Pictures can be added like in a usual markdown file via URL or relative path (for loacal images):
+    Pictures can be added like in a usual markdown file via URL or relative path (for local images):
 
 === "URL"
     ```bash
@@ -311,88 +416,295 @@ Here is an example of using images in a quiz:
 
     @END
 
+#### Complete Keyword Reference
+
+For advanced users, here's a complete reference of all available keywords:
+
+| Keyword                 | Description                                                                                             | Default / Behavior                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `@START` / `@END`       | Marks the beginning and end of the interactive quiz block. **Required.**                                 | N/A                                               |
+| `@id: <unique_name>`      | Assigns a unique identifier to a quiz instance, essential for referencing specific quizzes.             | N/A                                               |
+| `@author: <text>`        | Sets the author or owner of the quiz.                                                                   | Hidden if not provided.                           |
+| `@include: file=file_name,  id=quiz_id` | Imports a specific quiz from an external file for reusability.                                          | N/A                                               |
+| `@title: <text>`        | Sets the main header for the quiz.                                                                      | Hidden if not provided.                           |
+| `@description: <text>`  | Sets the introductory instructions for the quiz.                                                        | Hidden if not provided.                           |
+| `@layout: <list/book>`  | Defines the quiz layout. `list` shows all questions vertically, `book` shows one question per slide.      | `book`                                            |
+| `@feedback_mode: <end/immediate>` | `immediate` shows results after each question, `end` reveals results only upon final submission. | `end`                                             |
+| `@shuffle_questions: <true/false>` | Randomizes the order of questions to prevent memorization.                                   | `false`                                           |
+| `@time_limit: <seconds>` | Sets a countdown timer in seconds.                                                                      | Hidden if not provided.                           |
+| `@required_score: <number>`  | Sets a minimum score threshold required to "pass" the quiz. | Hidden if not provided.                                            | 
+| `@allow_back: <true/false>` | Allows the user to go back to previous questions.                                                     | `true`                                            |
+| `@explanation: <text>`  | Provides context for the correct answer during feedback. Applied to individual questions.                                                | N/A                                               |
+
+!!! Note "Individual Parameter"
+    All parameters are global (they apply to the entire quiz), except `@explanation` which is applied individually to each question.
+
  
-## Features
+## Advanced Features
 
 ###Referencing and Explanations
+
+!!! Note "How do they work?"
+    
+    * **Explanations** provide immediate context and feedback when students review their answers
+    * **References** link directly to relevant lecture material, allowing students to jump to detailed explanations. They use *standard Markdown links* to connect quiz explanations to headers, paragraphs, or sections in your documentation.
 
 **Explanations**
 
 You can add explanations to each quiz question using a simple syntax. To include an explanation, write:
 
-```
-@explanation: Actual markdown text for the explanation. This is an explanation.
-```
+=== "Code"
+    ```
+    ‎@START
+    @title: Explanations first example 
 
-@START
-@title: Explanations first example 
+    Which of the following is not a position in football/soccer?
+    [ ] Goal defense
+    [x] Left midfielder
+    [ ] Right fullback
+    [ ] Centre back
+    @explanation: This is a simple explanation.
 
-Which of the following is not a position in football/soccer?
-[ ] Goal defense
-[x] Left midfielder
-[ ] Right fullback
-[ ] Centre back
-@explanation: This is a simple explanation.
+    @END
+    ```
 
-@END
+=== "Simple Explanation"
+    @START
+    @title: Explanations first example 
+
+    Which of the following is not a position in football/soccer?
+    [ ] Goal defense
+    [x] Left midfielder
+    [ ] Right fullback
+    [ ] Centre back
+    @explanation: This is a simple explanation.
+
+    @END
 
 <br>
-<br>
 
-**Referencing Lecture Material**
-
->* Questions can link directly to lecture notes
->* Using standard Markdown links
->* Students can jump directly to the relevant explanation.
+---
 
 **Reference to headers**
 
-Headings automatically create anchors. Anchors are in lowercase letters and dash-separated.
+Headings automatically create anchors. Anchors are in lowercase letters and dash-separated. See the example below:
 
-=== "Linking to the same file"
-    Planets Lecture: 
-    ```
-    ##Order of the planets
-    The planets orbit the Sun in a fixed order.
-    ```
+Lecture Notes:
 
-    Quiz explanation:
-    ```
-    @explanation: 
-    See list of the planets [here](#order-of-the-planets)
-    ```
+## Python Data Types
 
-=== "Linking to another file"
-    Football Lecture: lecture_notes.md
-    ```
-    ##Football positions
-    There are a lot of footbal positions.
-    ```
-
-    Quiz explanation:
-    ```
-    @explanation: 
-    See the football positions [here](lecture_notes.md#football-positions)
-    ```
+Python supports several built-in data types that are fundamental to programming. Understanding these types is crucial for writing effective Python code. The most common types include integers, floats, strings, lists, dictionaries, and booleans. Each type has specific characteristics and use cases that make them suitable for different programming tasks.
 
 <br>
+
+Quiz with Explanation:
+
+=== "HTML Syntax"
+    ```
+    ‎@START
+    @title: Python Basics Quiz
+
+    Which of the following is a Python data type?
+    [ ] Function
+    [x] Dictionary
+    [ ] Loop
+    [ ] Class
+    @explanation: Review the <a href="#python-data-types">Python Data Types</a> section for more information.
+    @END
+    ```
+
+=== "Markdown Syntax"
+    ```
+    ‎@START
+    @title: Python Basics Quiz
+
+    Which of the following is a Python data type?
+    [ ] Function
+    [x] Dictionary
+    [ ] Loop
+    [ ] Class
+    @explanation: Review the [Python Data Types](#python-data-types) section for more information.
+    @END
+    ```
+
+=== "Rendered Quiz"
+    @START
+    @title: Python Basics Quiz
+
+    Which of the following is a Python data type?
+    [ ] Function
+    [x] Dictionary
+    [ ] Loop
+    [ ] Class
+    @explanation: Review the <a href="#python-data-types">Python Data Types</a> section for more information.
+    @END
+
+
+<br>
+
+---
 
 **Reference to Non-Heading Content**
 
 If you want to link to a specific paragraph or sentence, you must add an explicit anchor using inline HTML:
+
+```
+<a id="lowercase-dashed-id"></a> When naming variables in Python...
+```
+
+Then add a link to it in your quiz explanation using the id of the anchor:
+
+=== "HTML Syntax"
     ```
-    <a id="planet-definition"></a>
-    The planets orbit the Sun in a fixed order.
+    @explanation: Learn more about <a href="#lowercase-dashed-id">Displayed text for the link</a>
     ```
 
-Then link to it:
+=== "Markdown Syntax"
     ```
-    @explanation: [Planet definition](#planet-definition)
+    @explanation: Learn more about [Displayed text for the link](#lowercase-dashed-id)
     ```
+See the example below:
 
 <br>
 
-**Reference-Style Links**
+Lecture Notes
+
+Python has specific conventions for naming variables that help maintain code readability and consistency across projects. These conventions are outlined in PEP 8, the official Python style guide. Following these guidelines makes your code more professional and easier for other developers to understand.
+<a id="variable-naming"></a>
+When naming variables in Python, follow the PEP 8 style guide. Use lowercase letters with underscores for variable names (snake_case). Variable names should be descriptive and meaningful. Avoid using single letters except for loop counters. Good examples include `user_name`, `total_count`, and `is_valid`. Bad examples include `x`, `data`, and `temp`.
+
+<br>
+
+Quiz with Explanation
+
+
+=== "HTML Syntax"
+
+    ```
+    ‎@START
+    @title: Python Naming Conventions
+
+    Which variable name follows Python naming conventions?
+    [ ] UserName
+    [x] user_name
+    [ ] userName
+    [ ] user-name
+    @explanation: Learn more about <a href="#variable-naming">variable naming conventions</a>  in the lecture notes.
+    @END
+    ```
+
+=== "Markdown Syntax"
+
+    ```
+    ‎@START
+    @title: Python Naming Conventions
+
+    Which variable name follows Python naming conventions?
+    [ ] UserName
+    [x] user_name
+    [ ] userName
+    [ ] user-name
+    @explanation: Learn more about [variable naming conventions](#variable-naming) in the lecture notes.
+    @END
+    ```
+
+=== "Rendered Quiz"
+
+    @START
+    @title: Python Naming Conventions
+
+    Which variable name follows Python naming conventions?
+    [ ] UserName
+    [x] user_name
+    [ ] userName
+    [ ] user-name
+    @explanation: Learn more about <a href="#variable-naming">variable naming conventions</a>in the lecture notes.
+    @END
+
+---
+
+**Linking to other files**
+
+When linking from a quiz `@explanation`, you must link to the **built site URL**, not the raw `*.md` source file name. (The quiz explanation content is rendered client-side, so MkDocs doesn’t get a chance to rewrite `index.md#...` into the correct page URL.)
+
+In most MkDocs sites (default “directory URLs”), pages look like `/page-name/` in the browser:
+- `index.md` becomes the site root: `../`
+- `lecture_notes.md` becomes: `../lecture_notes/`
+
+Then add the anchor: `#anchor-name` (lowercase, dash-separated).
+
+
+In `additional_quizzes.md` we have the following heading:
+
+```
+## Short Description
+The Markdown Quiz Plugin is a powerful, lightweight extension...
+```
+
+In our quiz we include:
+
+=== "HTML Syntax"
+    ```
+    @explanation: See a demo <a href="../#short-description">here</a>
+    ```
+
+=== "Markdown Syntax"
+    ```
+    @explanation: See a demo [here](../#short-description)
+    ```
+<br>
+
+Complete Quiz Example
+
+=== "HTML Syntax"
+    ```
+    ‎@START
+    @title: Introductory Quiz
+
+    What is my favourite color?
+    [ ] Blue
+    [x] Green
+    [ ] Purple
+    [ ] Burgundy
+    @explanation: See a demo [here](../#short-description)
+    @END
+    ```
+
+=== "Markdown Syntax"
+    ```
+    ‎@START
+    @title: Introductory Quiz
+
+    What is my favourite color?
+    [ ] Blue
+    [x] Green
+    [ ] Purple
+    [ ] Burgundy
+    @explanation: See a demo [here](../#short-description)
+    @END
+    ```
+
+=== "Rendered Quiz"
+    @START
+    @title: Introductory Quiz
+
+    What is my favourite color?
+    [ ] Blue
+    [x] Green
+    [ ] Purple
+    [ ] Burgundy
+    @explanation: See a demo <a href="../additional_quizzes/#short-description">here</a>
+    @END
+
+
+!!! Note "Recommendation"
+    We suggest using the HTML format for better behaviour.
+
+<br>
+
+---
+
+**Styling Links**
 
 Useful for longer explanations or repeated links.
 
@@ -406,52 +718,51 @@ Instead of writing the reference in the explanation, you can define it as below:
 [planets]: lecture_notes.md#order-of-the-planets
 ```
 
+<br>
 
+### Multiple Quizzes in Mkdown Files
 
-###Linking DEMO
+It is possible to have multiple quizzes in a markdown file. Additionally, you can include quizzes from other markdown files using the `@include` directive. This allows you to organize quizzes in separate files and reuse them across your documentation.
 
-Lecture material: 
-<a id="order-of-the-planets"></a>
-Here is the order of the planets in our solar system, starting from the Sun, along with a popular mnemonic to help you remember them.
+**Syntax:**
 
-Order of the Planets
-Mnemonic Phrase: "My Very Educated Mother Just Served Us Noodles."
-
-Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune
-
-@START
-@title: Explanations second example
-
-Put the planets in order from the Sun:
-(1.) Mercury
-(2.) Venus
-(3.) Earth
-(4.) Mars
-@explanation: See [Order of the planets](#order-of-the-planets)
-@END
-
-
-###Multiple Quizzes in Mkdown Files
-
-It is possible to have multiple quizzes in a markdown file. 
-Also, we can have multiple markdown files connected, so that the quizzes in one file will be shown when opening the other file. For this, we have:
-
+There is a single line of code:
 
 ```
-@include: file=additional_quizzes.md, if= id1, id2, …
+‎@include: file=filename.md, id=quiz-id1, quiz-id2, ...
 ```
 
-The following quiz was imported from another file:
+**Including one Quiz**
+
+To include one quiz from `additional_quizzes.md` use:
 
 === "Code"
     ```
-    ‎@include: file=index.md,  id=comprehensive-math-science-quiz
+    ‎@include: file=additional_quizzes.md, id=markdown-basics
     ```
 
-=== "Rendered quiz"
-    @include: file=index.md,  id=comprehensive-math-science-quiz
+=== "Rendered Quiz"
+    @include: file=additional_quizzes.md, id=markdown-basics
 
-##Contributions
+---
+
+**Including Multiple Quizzes**
+
+To include multiple quizzes from the same file, list their IDs separated by commas:
+
+=== "Code"
+    ```
+    ‎@include: file=additional_quizzes.md, id=markdown-basics, markdown-lists, markdown-links
+    ```
+
+=== "Rendered Quizzes"
+    @include: file=additional_quizzes.md, id=markdown-basics, markdown-lists, markdown-links
+
+!!! Note
+    Make sure each quiz in the source file has a unique `@id:` identifier. The file path is relative to the current markdown file.
+
+
+## Contributions
 
 We welcome contributions from the community! If you're interested in improving the MkDocs Quiz Plugin, here’s how you can get started:
 
