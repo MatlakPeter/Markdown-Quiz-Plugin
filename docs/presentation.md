@@ -351,17 +351,19 @@ Thank you for listening!
 ---
 4. MVP
 ---
-"MVP" stands for:
-[] Most Valuable Player
+What does "MVP" actually stand for in our project?
+[ ] Most Valuable Player
 [x] Minimum Viable Product
-[] My Very (good) Presentation
-[] Majestically Vibrant Parmesan 
+[ ] Maximum Viable Panic
+[ ] My Very (sketchy) Presentation
+@explanation: While we definitely panicked, we delivered a Minimum Viable Product!
 ---
-Things I knew vs things I did not know:
-{Good stories| User story}
-{Good 'Epic moments' youtube videos | Epic from Taiga}
-{How to talk | How to lead, organise and talk to a 5 person team}
-{How to plug in my computer | What is a Mkdocs plugin}
+Expectation vs Reality:
+{Good stories | User story}
+{'Epic Fails' compilations | Epic from Taiga}
+{Merge into traffic | Merging Git conflicts}
+{How to plug in my computer | Develop a plugin}
+@explanation: We learned that "Merging" in Git is much more dangerous than driving a car.
 ---
 Application workflow 
 ![Picture](/pictures/quiz.png)
@@ -566,7 +568,6 @@ So, as a conclusion of the project's final result: Team building...
 [] has not influenced the project at all
 [x] is key to getting to know your co-workers in order to develop a great project
 [x] is as important as communication skills
-sim
 ---
 Demo
 ---
