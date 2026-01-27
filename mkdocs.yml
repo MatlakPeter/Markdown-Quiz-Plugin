@@ -3,6 +3,10 @@ site_name: Quiz Plugin
 plugins:
     - search
     - quiz
+nav:
+  - Home: index.md
+  - Documentation: documentation.md
+  - Presentation: presentation.md
 
 
 # Activate PyMdown Extensions here
@@ -27,7 +31,7 @@ theme:
     # Light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: brown
+      primary: indigo
       accent: orange
       toggle:
         icon: material/brightness-7
