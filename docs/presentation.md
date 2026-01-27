@@ -1,7 +1,6 @@
 #Presentation
 @START
-@title: Presentation
-@description: Quiz Plugin for MkDocs
+@title:Designing a Quiz Plugin people actually want
 @author: Us
 @time_limit: 5400
 @feedback_mode: immediate
@@ -560,7 +559,6 @@ Then...what knowledge have we gathered and why?:
 {Time management | Setting our own deadlines }
 {Improvising | Changing aspects and timelines from the project }
 {Minigolf | Team building }
-
 
 ---
 
