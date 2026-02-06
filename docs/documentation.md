@@ -693,7 +693,7 @@ Complete Quiz Example
     [x] Green
     [ ] Purple
     [ ] Burgundy
-    @explanation: See a demo [here](../additional_quizzes/#short-description)
+    @explanation: See a demo <a href="../additional_quizzes/#short-description">here</a>
     @END
 
 
@@ -789,7 +789,7 @@ We appreciate your help in making this plugin better!
 
 >* Q: Can I create math equations in my quizzes?
 
- Yes! The plugin includes MathJax support for LaTeX math notation. Use ``` $...$ ``` for inline math and ``` $$...$$ ``` or ``` \[...\] ``` for display math.
+ Yes! The plugin includes MathJax support for LaTeX math notation. Use ``` $...$ ``` for inline math and ``` $$...$$ ``` for display math.
 
 
 >* Q: How do I reuse the same quiz in multiple places?
@@ -814,7 +814,7 @@ We appreciate your help in making this plugin better!
 
 >* Q: Can students skip questions?
 
- By default, yes (@allow_skip: true). If you want to require answers to all questions, set ``` @allow_skip: false ```
+ By default, yes.
 
 
 >* Q: What happens if the timer runs out?
