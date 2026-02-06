@@ -6,7 +6,6 @@ plugins:
 nav:
   - Home: index.md
   - Documentation: documentation.md
-  - Presentation: presentation.md
 
 
 # Activate PyMdown Extensions here
